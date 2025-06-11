@@ -19,17 +19,46 @@ function RunningScreen() {
   const [characterSize, setCharacterSize] = useState<number>(240);
   const [activeSlotIndex, setActiveSlotIndex] = useState<number>(0);
   const [isSlotModalOpen, setIsSlotModalOpen] = useState<boolean>(false);
-
-  // ▼▼▼【新規state】UIの表示・非表示を管理 ▼▼▼
   const [isUiVisible, setIsUiVisible] = useState<boolean>(true);
-
   const currentCharacter = slots[activeSlotIndex];
+
+  // ▼▼▼【新規】フルスクリーンを制御する関数 ▼▼▼
+  const enterFullscreen = () => {
+    const element = document.documentElement; // ページ全体を対象にする
+    if (element.requestFullscreen) {
+      element.requestFullscreen();
+    } else if ((element as any).mozRequestFullScreen) { // Firefox
+      (element as any).mozRequestFullScreen();
+    } else if ((element as any).webkitRequestFullscreen) { // Chrome, Safari, Opera
+      (element as any).webkitRequestFullscreen();
+    } else if ((element as any).msRequestFullscreen) { // IE/Edge
+      (element as any).msRequestFullscreen();
+    }
+  };
+
+  const exitFullscreen = () => {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if ((document as any).mozCancelFullScreen) {
+      (document as any).mozCancelFullScreen();
+    } else if ((document as any).webkitExitFullscreen) {
+      (document as any).webkitExitFullscreen();
+    } else if ((document as any).msExitFullscreen) {
+      (document as any).msExitFullscreen();
+    }
+  };
 
   useEffect(() => {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
         .then((stream: MediaStream) => { if (videoRef.current) videoRef.current.srcObject = stream; })
         .catch((err: any) => { console.error(err); setError("カメラの起動に失敗しました"); });
+    }
+    // このページを離れるときに、フルスクリーンを解除する
+    return () => {
+        if(document.fullscreenElement) {
+            exitFullscreen();
+        }
     }
   }, []);
 
@@ -62,27 +91,29 @@ function RunningScreen() {
     }
   }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove]);
 
-  const handleStartRun = () => { setError(null); setStartTime(Date.now()); setIsRunning(true); };
+  // ▼▼▼【修正】走行開始時にフルスクリーンにする ▼▼▼
+  const handleStartRun = () => {
+    enterFullscreen(); // フルスクリーンに移行
+    setError(null);
+    setStartTime(Date.now());
+    setIsRunning(true);
+  };
+
+  // ▼▼▼【修正】走行終了時にフルスクリーンを解除する ▼▼▼
   const handleEndRun = () => {
-    if (!startTime) { setError("走行開始情報が記録されていません。"); return; }
+    exitFullscreen(); // フルスクリーンを解除
+    if (!startTime) {
+      setError("走行開始情報が記録されていません。");
+      return;
+    }
     const params = new URLSearchParams({ startTime: startTime.toString() });
     navigate(`/result?${params.toString()}`);
   };
 
-  // const handleChangeCharacterSlot = () => {
-  //   setActiveSlotIndex(prevIndex => {
-  //     let nextIndex = prevIndex + 1;
-  //     while(nextIndex !== prevIndex) {
-  //       if (nextIndex >= slots.length) nextIndex = 0;
-  //       if (slots[nextIndex]) return nextIndex;
-  //       nextIndex++;
-  //     }
-  //     return prevIndex;
-  //   });
-  // };
+
 
   const increaseSize = () => setCharacterSize(prevSize => Math.min(prevSize + SIZE_STEP, MAX_SIZE));
-  const decreaseSize = () => setCharacterSize(prevSize => Math.max(prevSize - SIZE_STEP, MIN_SIZE));
+  const decreaseSize = () => setCharacterSize(prevSize => Math.max(prevSize - MIN_SIZE, MIN_SIZE));
 
   return (
     <div className="relative h-screen w-full bg-black overflow-hidden">
@@ -107,7 +138,6 @@ function RunningScreen() {
       
       <div className="absolute inset-0 flex flex-col justify-end items-center p-4 pointer-events-none">
         <div className="flex flex-col items-center gap-4 pointer-events-auto">
-           {/* ▼▼▼【修正】操作UIを、isUiVisibleの状態に応じて表示・非表示にする ▼▼▼ */}
           {isUiVisible && !isRunning && (
             <>
               <button onClick={() => setIsSlotModalOpen(true)} className="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition mb-2">
@@ -128,7 +158,6 @@ function RunningScreen() {
         </div>
       </div>
       
-      {/* ▼▼▼【新規UI】UI表示切り替えボタン（左下） ▼▼▼ */}
       <button onClick={() => setIsUiVisible(prev => !prev)} className="absolute bottom-4 left-4 z-50 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition pointer-events-auto">
         {isUiVisible ? (
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
