@@ -1,29 +1,25 @@
 import { createContext, useState, useEffect, useContext } from 'react';
 import type { ReactNode } from 'react';
-import type { Character } from '../data/characterData';
+import type { Character } from '../data/characterData'; // "type"のインポートを修正
 import { availableCharacters } from '../data/characterData';
 
-// 4つのスロットを表現する型。キャラクターが入っているか、空（null）か。
 type Slots = [Character | null, Character | null, Character | null, Character | null];
 
+// ▼▼▼【修正点1】updateSlotが `Character | null` を受け取れるように、型定義を変更 ▼▼▼
 interface CharacterContextType {
   slots: Slots;
-  updateSlot: (index: number, character: Character) => void;
+  updateSlot: (index: number, character: Character | null) => void;
 }
 
 const CharacterContext = createContext<CharacterContextType | undefined>(undefined);
-
-// localStorageに保存するためのキー
 const STORAGE_KEY = 'character-slots';
 
 export const CharacterProvider = ({ children }: { children: ReactNode }) => {
-  // アプリ起動時に、localStorageから保存されたデータを読み込む
   const [slots, setSlots] = useState<Slots>(() => {
     try {
       const savedSlotsJSON = window.localStorage.getItem(STORAGE_KEY);
       if (savedSlotsJSON) {
         const savedSlots = JSON.parse(savedSlotsJSON);
-        // データが4つの要素を持つ配列であることを確認
         if (Array.isArray(savedSlots) && savedSlots.length === 4) {
           return savedSlots as Slots;
         }
@@ -31,11 +27,9 @@ export const CharacterProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error("Failed to load slots from localStorage", error);
     }
-    // 保存されたデータがない、または不正な場合は、初期状態（1番目のスロットにデフォルトキャラ）を返す
     return [availableCharacters[0], null, null, null];
   });
 
-  // slotsの状態が変わるたびに、自動でlocalStorageに保存する
   useEffect(() => {
     try {
       const slotsJSON = JSON.stringify(slots);
@@ -45,8 +39,8 @@ export const CharacterProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [slots]);
 
-  // スロットの中身を更新するための関数
-  const updateSlot = (index: number, character: Character) => {
+  // ▼▼▼【修正点2】関数の引数の型も、`Character | null` に変更 ▼▼▼
+  const updateSlot = (index: number, character: Character | null) => {
     if (index >= 0 && index < 4) {
       const newSlots = [...slots] as Slots;
       newSlots[index] = character;

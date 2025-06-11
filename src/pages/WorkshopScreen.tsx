@@ -22,6 +22,15 @@ function WorkshopScreen() {
     setSelectedSlotIndex(null);
   };
 
+  // ▼▼▼【新規】スロットを空にするための関数 ▼▼▼
+  const handleEmptySlot = () => {
+    if (selectedSlotIndex !== null) {
+      updateSlot(selectedSlotIndex, null); // contextにnullを送る
+    }
+    setIsModalOpen(false);
+    setSelectedSlotIndex(null);
+  };
+
   return (
     <div className="min-h-screen bg-[#f5f5f5] flex flex-col items-center p-4">
       <h1 className="text-3xl font-bold my-8 font-mincho text-[#333333]">スロット編成</h1>
@@ -29,7 +38,7 @@ function WorkshopScreen() {
         <p className="text-center text-gray-600 mb-6">走行画面で使うキャラクターを4つのスロットにセットしてください。</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {slots.map((slotCharacter, index) => (
-            <div key={index} onClick={() => handleSlotClick(index)} className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50">
+            <div key={index} onClick={() => handleSlotClick(index)} className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 transition-colors">
               <p className="font-bold text-gray-500 mb-2">スロット {index + 1}</p>
               {slotCharacter ? (
                 <>
@@ -53,6 +62,17 @@ function WorkshopScreen() {
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setIsModalOpen(false)}>
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">キャラクターを選択</h2>
+            
+            {/* ▼▼▼【新規】スロットを空にするボタンを追加 ▼▼▼ */}
+            <div className="mb-4 border-b pb-4">
+              <button
+                onClick={handleEmptySlot}
+                className="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
+              >
+                このスロットを空にする
+              </button>
+            </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {availableCharacters.map((char) => (
                 <div key={char.id} className="p-3 bg-gray-100 rounded-lg text-center cursor-pointer hover:bg-gray-200 transition-colors" onClick={() => handleCharacterSelect(char)}>
