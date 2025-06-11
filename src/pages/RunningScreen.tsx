@@ -2,31 +2,27 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCharacterSlots } from '../contexts/CharacterContext';
 
-// ▼▼▼【修正点1】サイズ調整の定数と初期値を変更 ▼▼▼
-const SIZE_STEP = 24; // 変化量を3倍に
+const SIZE_STEP = 24;
 const MIN_SIZE = 32;
 const MAX_SIZE = 256;
 
 function RunningScreen() {
   const navigate = useNavigate();
   const { slots } = useCharacterSlots();
-
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [isRunning, setIsRunning] = useState<boolean>(false);
-  
   const [characterPosition, setCharacterPosition] = useState<number>(50);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const sliderRef = useRef<HTMLDivElement | null>(null);
-
-  const [characterSize, setCharacterSize] = useState<number>(240); // 初期値を大きく
+  const [characterSize, setCharacterSize] = useState<number>(240);
   const [activeSlotIndex, setActiveSlotIndex] = useState<number>(0);
-
-  // ▼▼▼【新規state】スロット選択モーダルの開閉を管理 ▼▼▼
   const [isSlotModalOpen, setIsSlotModalOpen] = useState<boolean>(false);
 
-  // 現在表示するキャラクター。スロットが空の場合も考慮する
+  // ▼▼▼【新規state】UIの表示・非表示を管理 ▼▼▼
+  const [isUiVisible, setIsUiVisible] = useState<boolean>(true);
+
   const currentCharacter = slots[activeSlotIndex];
 
   useEffect(() => {
@@ -73,14 +69,24 @@ function RunningScreen() {
     navigate(`/result?${params.toString()}`);
   };
 
+  const handleChangeCharacterSlot = () => {
+    setActiveSlotIndex(prevIndex => {
+      let nextIndex = prevIndex + 1;
+      while(nextIndex !== prevIndex) {
+        if (nextIndex >= slots.length) nextIndex = 0;
+        if (slots[nextIndex]) return nextIndex;
+        nextIndex++;
+      }
+      return prevIndex;
+    });
+  };
+
   const increaseSize = () => setCharacterSize(prevSize => Math.min(prevSize + SIZE_STEP, MAX_SIZE));
   const decreaseSize = () => setCharacterSize(prevSize => Math.max(prevSize - SIZE_STEP, MIN_SIZE));
 
   return (
     <div className="relative h-screen w-full bg-black overflow-hidden">
       <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-
-      {/* 左上のホームボタンはそのまま */}
       <div className="absolute top-4 left-4 z-50 flex gap-2">
         <Link to="/" className="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
@@ -101,14 +107,12 @@ function RunningScreen() {
       
       <div className="absolute inset-0 flex flex-col justify-end items-center p-4 pointer-events-none">
         <div className="flex flex-col items-center gap-4 pointer-events-auto">
-          {/* ▼▼▼【修正点2】ボタン類のUIを再配置 ▼▼▼ */}
-          {!isRunning && (
+           {/* ▼▼▼【修正】操作UIを、isUiVisibleの状態に応じて表示・非表示にする ▼▼▼ */}
+          {isUiVisible && !isRunning && (
             <>
-              {/* キャラクター変更ボタンを、モーダルを開くように変更し、ここに移動 */}
               <button onClick={() => setIsSlotModalOpen(true)} className="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition mb-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
               </button>
-              {/* サイズ変更ボタン */}
               <div className="flex items-center justify-center gap-4 mb-4">
                   <button onClick={decreaseSize} className="bg-gray-700 bg-opacity-50 text-white font-bold w-10 h-10 rounded-full text-2xl flex items-center justify-center">-</button>
                   <div className="text-lg font-bold font-mono text-white bg-black bg-opacity-50 px-3 py-1 rounded-md">{characterSize}px</div>
@@ -123,36 +127,30 @@ function RunningScreen() {
           )}
         </div>
       </div>
+      
+      {/* ▼▼▼【新規UI】UI表示切り替えボタン（左下） ▼▼▼ */}
+      <button onClick={() => setIsUiVisible(prev => !prev)} className="absolute bottom-4 left-4 z-50 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition pointer-events-auto">
+        {isUiVisible ? (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59" /></svg>
+        )}
+      </button>
+
       {error && (<div className="absolute top-16 left-1/2 -translate-x-1/2 bg-[#f44336] text-white p-4 rounded-lg font-roboto z-50 max-w-[calc(100%-2rem)] text-center shadow-lg">{error}</div>)}
 
-      {/* ▼▼▼【新規】スロット選択モーダルの実装 ▼▼▼ */}
       {isSlotModalOpen && (
         <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setIsSlotModalOpen(false)}>
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">スロットを選択</h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {slots.map((slotCharacter, index) => (
-                <div
-                  key={index}
-                  className="border-2 border-gray-300 rounded-lg p-3 text-center cursor-pointer hover:bg-gray-100"
-                  onClick={() => {
-                    // 空のスロットは選択できないようにする
-                    if (slotCharacter) {
-                      setActiveSlotIndex(index);
-                      setIsSlotModalOpen(false);
-                    }
-                  }}
-                >
+                <div key={index} className="border-2 border-gray-300 rounded-lg p-3 text-center cursor-pointer hover:bg-gray-100" onClick={() => { if (slotCharacter) { setActiveSlotIndex(index); setIsSlotModalOpen(false); } }}>
                   <p className="font-bold text-gray-500 mb-2">スロット {index + 1}</p>
                   {slotCharacter ? (
-                    <>
-                      <img src={slotCharacter.imageSrc} alt={slotCharacter.name} className="w-full h-20 object-contain" />
-                      <p className="mt-1 text-sm font-semibold truncate">{slotCharacter.name}</p>
-                    </>
+                    <><img src={slotCharacter.imageSrc} alt={slotCharacter.name} className="w-full h-20 object-contain" /><p className="mt-1 text-sm font-semibold truncate">{slotCharacter.name}</p></>
                   ) : (
-                    <div className="w-full h-20 flex items-center justify-center bg-gray-100 rounded-md">
-                      <p className="text-gray-400 text-sm">空き</p>
-                    </div>
+                    <div className="w-full h-20 flex items-center justify-center bg-gray-100 rounded-md"><p className="text-gray-400 text-sm">空き</p></div>
                   )}
                 </div>
               ))}
