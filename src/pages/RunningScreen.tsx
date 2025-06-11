@@ -69,17 +69,17 @@ function RunningScreen() {
     navigate(`/result?${params.toString()}`);
   };
 
-  const handleChangeCharacterSlot = () => {
-    setActiveSlotIndex(prevIndex => {
-      let nextIndex = prevIndex + 1;
-      while(nextIndex !== prevIndex) {
-        if (nextIndex >= slots.length) nextIndex = 0;
-        if (slots[nextIndex]) return nextIndex;
-        nextIndex++;
-      }
-      return prevIndex;
-    });
-  };
+  // const handleChangeCharacterSlot = () => {
+  //   setActiveSlotIndex(prevIndex => {
+  //     let nextIndex = prevIndex + 1;
+  //     while(nextIndex !== prevIndex) {
+  //       if (nextIndex >= slots.length) nextIndex = 0;
+  //       if (slots[nextIndex]) return nextIndex;
+  //       nextIndex++;
+  //     }
+  //     return prevIndex;
+  //   });
+  // };
 
   const increaseSize = () => setCharacterSize(prevSize => Math.min(prevSize + SIZE_STEP, MAX_SIZE));
   const decreaseSize = () => setCharacterSize(prevSize => Math.max(prevSize - SIZE_STEP, MIN_SIZE));
