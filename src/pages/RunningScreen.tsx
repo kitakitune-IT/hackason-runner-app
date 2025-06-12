@@ -4,12 +4,11 @@ import { useCharacterContext } from '../contexts/CharacterContext';
 
 const SIZE_STEP = 24;
 const MIN_SIZE = 32;
-const MAX_SIZE = 256;
+const MAX_SIZE = 512;
 
 function RunningScreen() {
   const navigate = useNavigate();
-// 変更後
-const { slots } = useCharacterContext();
+  const { slots } = useCharacterContext();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [startTime, setStartTime] = useState<number | null>(null);
@@ -21,9 +20,9 @@ const { slots } = useCharacterContext();
   const [activeSlotIndex, setActiveSlotIndex] = useState<number>(0);
   const [isSlotModalOpen, setIsSlotModalOpen] = useState<boolean>(false);
   const [isUiVisible, setIsUiVisible] = useState<boolean>(true);
-  const currentCharacter = slots[activeSlotIndex];
 
-  // ▼▼▼【新規】フルスクリーンを制御する関数 ▼▼▼
+  const currentCharacter = slots[activeSlotIndex];
+    // ▼▼▼【新規】フルスクリーンを制御する関数 ▼▼▼
   const enterFullscreen = () => {
     const element = document.documentElement; // ページ全体を対象にする
     if (element.requestFullscreen) {
@@ -55,7 +54,7 @@ const { slots } = useCharacterContext();
         .then((stream: MediaStream) => { if (videoRef.current) videoRef.current.srcObject = stream; })
         .catch((err: any) => { console.error(err); setError("カメラの起動に失敗しました"); });
     }
-    // このページを離れるときに、フルスクリーンを解除する
+        // このページを離れるときに、フルスクリーンを解除する
     return () => {
         if(document.fullscreenElement) {
             exitFullscreen();
@@ -111,10 +110,7 @@ const { slots } = useCharacterContext();
     navigate(`/result?${params.toString()}`);
   };
 
-
-
-  const increaseSize = () => setCharacterSize(prevSize => Math.min(prevSize + SIZE_STEP, MAX_SIZE));
-  const decreaseSize = () => setCharacterSize(prevSize => Math.max(prevSize - MIN_SIZE, MIN_SIZE));
+  // ▼▼▼【削除】increaseSize と decreaseSize 関数は、スライダーに役割を譲ったため不要になった ▼▼▼
 
   return (
     <div className="relative h-screen w-full bg-black overflow-hidden">
@@ -124,7 +120,6 @@ const { slots } = useCharacterContext();
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
         </Link>
       </div>
-
       <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ top: `${characterPosition}%`, width: `${characterSize}px`, height: `${characterSize}px` }}>
         {currentCharacter ? (
           <img src={currentCharacter.imageSrc} alt={currentCharacter.name} className="w-full h-full object-contain" />
@@ -132,28 +127,24 @@ const { slots } = useCharacterContext();
           <div className="w-full h-full bg-red-500 bg-opacity-50 flex items-center justify-center text-white text-center rounded-lg">スロットが空です</div>
         )}
       </div>
-      
       <div ref={sliderRef} className="absolute right-4 top-4 bottom-4 w-12 bg-black bg-opacity-50 cursor-pointer rounded-lg z-50" onMouseDown={handleMouseDown} onTouchStart={handleTouchStart} >
         <div className="absolute w-8 h-8 bg-white rounded-full left-1/2" style={{ top: `${characterPosition}%`, transform: "translate(-50%, -50%)", cursor: isDragging ? "grabbing" : "grab" }} />
       </div>
-      
       <div className="absolute inset-0 flex flex-col justify-end items-center p-4 pointer-events-none">
         <div className="flex flex-col items-center gap-4 pointer-events-auto">
           {isUiVisible && (
-            <div className="flex flex-col items-center gap-2 mb-4"> {/* 新しくdivで囲んで、レイアウトを整える */}
-              {/* 走行開始前のみ、キャラ変更とサイズ変更ボタンを表示 */}
-              {!isRunning && (
-                <>
-                  <button onClick={() => setIsSlotModalOpen(true)} className="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                  </button>
-                  <div className="flex items-center justify-center gap-4 mt-2">
-                      <button onClick={decreaseSize} className="bg-gray-700 bg-opacity-50 text-white font-bold w-10 h-10 rounded-full text-2xl flex items-center justify-center">-</button>
-                      <div className="text-lg font-bold font-mono text-white bg-black bg-opacity-50 px-3 py-1 rounded-md">{characterSize}px</div>
-                      <button onClick={increaseSize} className="bg-gray-700 bg-opacity-50 text-white font-bold w-10 h-10 rounded-full text-2xl flex items-center justify-center">+</button>
-                  </div>
-                </>
-              )}
+            <div className="flex flex-col items-center gap-4 mb-4">
+              <div className='w-64'>
+                <input
+                  type="range"
+                  min={MIN_SIZE}
+                  max={MAX_SIZE}
+                  step={SIZE_STEP}
+                  value={characterSize}
+                  onChange={(e) => setCharacterSize(parseInt(e.target.value, 10))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
             </div>
           )}
           {!isRunning ? (
@@ -163,17 +154,17 @@ const { slots } = useCharacterContext();
           )}
         </div>
       </div>
-      
-      <button onClick={() => setIsUiVisible(prev => !prev)} className="absolute bottom-4 left-4 z-50 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition pointer-events-auto">
-        {isUiVisible ? (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-        ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59" /></svg>
+      <div className="absolute bottom-4 left-4 z-50 flex gap-2 pointer-events-auto">
+        <button onClick={() => setIsUiVisible(prev => !prev)} className="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition">
+          {isUiVisible ? ( <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> ) : ( <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59" /></svg> )}
+        </button>
+        {isUiVisible && (
+          <button onClick={() => setIsSlotModalOpen(true)} className="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          </button>
         )}
-      </button>
-
+      </div>
       {error && (<div className="absolute top-16 left-1/2 -translate-x-1/2 bg-[#f44336] text-white p-4 rounded-lg font-roboto z-50 max-w-[calc(100%-2rem)] text-center shadow-lg">{error}</div>)}
-
       {isSlotModalOpen && (
         <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setIsSlotModalOpen(false)}>
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
@@ -182,11 +173,7 @@ const { slots } = useCharacterContext();
               {slots.map((slotCharacter, index) => (
                 <div key={index} className="border-2 border-gray-300 rounded-lg p-3 text-center cursor-pointer hover:bg-gray-100" onClick={() => { if (slotCharacter) { setActiveSlotIndex(index); setIsSlotModalOpen(false); } }}>
                   <p className="font-bold text-gray-500 mb-2">スロット {index + 1}</p>
-                  {slotCharacter ? (
-                    <><img src={slotCharacter.imageSrc} alt={slotCharacter.name} className="w-full h-20 object-contain" /><p className="mt-1 text-sm font-semibold truncate">{slotCharacter.name}</p></>
-                  ) : (
-                    <div className="w-full h-20 flex items-center justify-center bg-gray-100 rounded-md"><p className="text-gray-400 text-sm">空き</p></div>
-                  )}
+                  {slotCharacter ? ( <><img src={slotCharacter.imageSrc} alt={slotCharacter.name} className="w-full h-20 object-contain" /><p className="mt-1 text-sm font-semibold truncate">{slotCharacter.name}</p></> ) : ( <div className="w-full h-20 flex items-center justify-center bg-gray-100 rounded-md"><p className="text-gray-400 text-sm">空き</p></div> )}
                 </div>
               ))}
             </div>

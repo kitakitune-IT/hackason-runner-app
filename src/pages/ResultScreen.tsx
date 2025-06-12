@@ -1,37 +1,46 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react'; // useRef をインポート
 import { useSearchParams, Link } from 'react-router-dom';
-import { useCharacterContext } from '../contexts/CharacterContext'; // ← Contextをimport
+import { useCharacterContext } from '../contexts/CharacterContext';
 
 function ResultScreen() {
     const [searchParams] = useSearchParams();
-    const { addPoints } = useCharacterContext(); // ← ポイント加算命令を取得
-
+    const { addRecord } = useCharacterContext();
     const [error, setError] = useState<string | null>(null);
     const [points, setPoints] = useState<number>(0);
     const [duration, setDuration] = useState<number>(0);
-    const [pointsAdded, setPointsAdded] = useState(false); // ← ポイント加算済みかどうかのフラグ
+    
+    // ▼▼▼【修正】「処理を実行したか」を覚えておくための、消えないメモ帳を用意 ▼▼▼
+    const effectRan = useRef(false);
 
     useEffect(() => {
-        const startTime = parseInt(searchParams.get("startTime") || "0");
-        if (startTime === 0) {
-            setError("走行開始時間が記録されていません");
-            return;
+        // ▼▼▼【修正】開発モードの2回実行のうち、2回目だけを処理するようにする ▼▼▼
+        if (effectRan.current === false) {
+            const startTime = parseInt(searchParams.get("startTime") || "0");
+            if (startTime === 0) {
+                setError("走行開始時間が記録されていません");
+                return;
+            }
+
+            const endTime = Date.now();
+            const durationInMinutes = Math.floor((endTime - startTime) / 60000);
+            setDuration(durationInMinutes);
+
+            const totalPoints = Math.floor(durationInMinutes * 10);
+            setPoints(totalPoints);
+
+            if (durationInMinutes > 0) {
+                const newRecord = {
+                    date: new Date().toLocaleDateString('ja-JP'),
+                    duration: durationInMinutes,
+                    points: totalPoints,
+                };
+                addRecord(newRecord);
+            }
+            
+            // 「処理を実行した」とメモ帳に書き込む
+            effectRan.current = true;
         }
-
-        const endTime = Date.now();
-        const durationInMinutes = Math.floor((endTime - startTime) / 60000);
-        setDuration(durationInMinutes);
-
-        const totalPoints = Math.floor(durationInMinutes * 10);
-        setPoints(totalPoints);
-
-        // ポイントが計算されて、まだ加算されていない場合、一度だけ実行
-        if (totalPoints > 0 && !pointsAdded) {
-            addPoints(totalPoints);
-            setPointsAdded(true); // 加算済みの印を付ける
-        }
-
-    }, [searchParams, addPoints, pointsAdded]);
+    }, [searchParams, addRecord]); // 依存配列から、不要なものを削除
 
     return (
         <div className="min-h-screen bg-[#f5f5f5] flex flex-col items-center justify-center p-4">
