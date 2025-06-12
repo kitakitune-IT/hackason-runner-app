@@ -9,14 +9,23 @@ function HomeScreen() {
 
   const isTutorialActive = tutorialStep < 5;
 
+  // ▼▼▼【変更】チュートリアルの進行状況を自動でチェックし、適切なステップまで進めるロジックを強化 ▼▼▼
   useEffect(() => {
-    if (tutorialStep === 1 && unlockedCharacterIds.includes(1)) {
+    // 既にチュートリアルが完了している場合は何もしない
+    if (!isTutorialActive) return;
+
+    // 条件を満たしているのにチュートリアルの段階が追いついていない場合、ステップを早送りする
+    
+    // スロット1にキャラクターがセット済みの場合 → ステップ4に進める
+    if (tutorialStep < 4 && slots[0] !== null) {
+      setTutorialStep(4);
+      return; // 複数のsetTutorialStepが同時に実行されるのを防ぐ
+    }
+    // ミーム（id:1）がアンロック済みの場合 → ステップ2に進める
+    if (tutorialStep < 2 && unlockedCharacterIds.includes(1)) {
       setTutorialStep(2);
     }
-    if (tutorialStep === 3 && slots[0] !== null) {
-      setTutorialStep(4);
-    }
-  }, [tutorialStep, unlockedCharacterIds, slots, setTutorialStep]);
+  }, [tutorialStep, unlockedCharacterIds, slots, setTutorialStep, isTutorialActive]);
 
   const handleDeleteAllData = () => {
     if (window.confirm('本当にすべてのデータを削除しますか？\nこの操作は元に戻せません。')) {
