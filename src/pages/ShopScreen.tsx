@@ -1,12 +1,21 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react'; // useEffectを追加
+import { Link, useNavigate } from 'react-router-dom'; // useNavigateを追加
 import { useCharacterContext } from '../contexts/CharacterContext';
 import { availableCharacters } from '../data/characterData';
 import type { Character } from '../data/characterData';
 
 function ShopScreen() {
-  const { points, unlockedCharacterIds, purchaseCharacter } = useCharacterContext();
+  const navigate = useNavigate();
+  const { points, unlockedCharacterIds, purchaseCharacter, tutorialStep, advanceTutorialStep } = useCharacterContext();
   const [message, setMessage] = useState('');
+
+  // ▼▼▼【修正】チュートリアルの自動進行チェック ▼▼▼
+  useEffect(() => {
+    // もし、チュートリアル段階が「1」で、かつ、ID:1のミームが既に購入済みなら、自動で次の段階へ
+    if (tutorialStep === 1 && unlockedCharacterIds.includes(1)) {
+      advanceTutorialStep();
+    }
+  }, [tutorialStep, unlockedCharacterIds, advanceTutorialStep]);
 
 // 変更後（データファイルに書かれた、そのままの価格を使う）
   const shopCharacters = availableCharacters;
@@ -27,6 +36,18 @@ function ShopScreen() {
 
   return (
     <div className="min-h-screen bg-[#f5f5f5] flex flex-col items-center p-4">
+       {/* ... */}
+       {/* ▼▼▼【修正】チュートリアルメッセージの表示条件を、新しい流れに修正 ▼▼▼ */}
+       {tutorialStep === 1 && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-30 pointer-events-none">
+           <div className="bg-white rounded-lg shadow-xl p-4 max-w-xs mx-auto"><p className="text-gray-800 text-lg text-center font-bold">まずは、練習用に「ミーム」をアンロックしてみましょう！</p></div>
+        </div>
+      )}
+      {tutorialStep === 2 && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-30 text-white text-2xl p-8 text-center animate-pulse" onClick={() => { advanceTutorialStep(); navigate('/'); }}>
+          <p>よくできました！<br/>次は、ホーム画面に戻りましょう。<br/>（このメッセージをタップ）</p>
+        </div>
+      )}
       <h1 className="text-3xl font-bold my-4 font-mincho text-[#333333]">gifショップ</h1>
       <p className="text-lg font-roboto text-gray-600 mb-2">所持ポイント: <span className="font-bold text-orange-500">{points} pt</span></p>
       
