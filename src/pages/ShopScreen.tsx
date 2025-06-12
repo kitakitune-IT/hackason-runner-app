@@ -32,7 +32,7 @@ function ShopScreen() {
       
       {/* ▼▼▼【新規】注意書きを追加 ▼▼▼ */}
       <p className="text-center text-sm text-red-600 my-4 px-4">
-        現在は機能の確認のため、一時的に価格を調整しています。
+        現在はプレゼン用に、一時的に価格を低くしています。
       </p>
 
       {message && <p className="text-center text-green-600 mb-4">{message}</p>}
