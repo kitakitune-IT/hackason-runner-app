@@ -138,17 +138,22 @@ function RunningScreen() {
       
       <div className="absolute inset-0 flex flex-col justify-end items-center p-4 pointer-events-none">
         <div className="flex flex-col items-center gap-4 pointer-events-auto">
-          {isUiVisible && !isRunning && (
-            <>
-              <button onClick={() => setIsSlotModalOpen(true)} className="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition mb-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-              </button>
-              <div className="flex items-center justify-center gap-4 mb-4">
-                  <button onClick={decreaseSize} className="bg-gray-700 bg-opacity-50 text-white font-bold w-10 h-10 rounded-full text-2xl flex items-center justify-center">-</button>
-                  <div className="text-lg font-bold font-mono text-white bg-black bg-opacity-50 px-3 py-1 rounded-md">{characterSize}px</div>
-                  <button onClick={increaseSize} className="bg-gray-700 bg-opacity-50 text-white font-bold w-10 h-10 rounded-full text-2xl flex items-center justify-center">+</button>
-              </div>
-            </>
+          {isUiVisible && (
+            <div className="flex flex-col items-center gap-2 mb-4"> {/* 新しくdivで囲んで、レイアウトを整える */}
+              {/* 走行開始前のみ、キャラ変更とサイズ変更ボタンを表示 */}
+              {!isRunning && (
+                <>
+                  <button onClick={() => setIsSlotModalOpen(true)} className="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  </button>
+                  <div className="flex items-center justify-center gap-4 mt-2">
+                      <button onClick={decreaseSize} className="bg-gray-700 bg-opacity-50 text-white font-bold w-10 h-10 rounded-full text-2xl flex items-center justify-center">-</button>
+                      <div className="text-lg font-bold font-mono text-white bg-black bg-opacity-50 px-3 py-1 rounded-md">{characterSize}px</div>
+                      <button onClick={increaseSize} className="bg-gray-700 bg-opacity-50 text-white font-bold w-10 h-10 rounded-full text-2xl flex items-center justify-center">+</button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
           {!isRunning ? (
             <button onClick={handleStartRun} className="bg-[#4CAF50] text-white font-bold py-3 px-10 rounded-full text-xl font-roboto shadow-lg">走行開始</button>
