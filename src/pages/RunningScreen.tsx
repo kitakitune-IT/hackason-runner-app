@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useCharacterSlots } from '../contexts/CharacterContext';
+import { useCharacterContext } from '../contexts/CharacterContext';
 
 const SIZE_STEP = 24;
 const MIN_SIZE = 32;
@@ -8,7 +8,8 @@ const MAX_SIZE = 256;
 
 function RunningScreen() {
   const navigate = useNavigate();
-  const { slots } = useCharacterSlots();
+// 変更後
+const { slots } = useCharacterContext();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [startTime, setStartTime] = useState<number | null>(null);

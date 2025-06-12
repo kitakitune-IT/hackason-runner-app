@@ -1,13 +1,18 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useCharacterSlots } from '../contexts/CharacterContext';
+// 変更後
+import { useCharacterContext } from '../contexts/CharacterContext';
 import { availableCharacters } from '../data/characterData';
 import type { Character } from '../data/characterData';
 
 function WorkshopScreen() {
-  const { slots, updateSlot } = useCharacterSlots();
+  // 変更後
+const { slots, updateSlot, unlockedCharacterIds } = useCharacterContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSlotIndex, setSelectedSlotIndex] = useState<number | null>(null);
+
+  // 購入済みのキャラクターだけをリストアップ
+  const unlockedCharacters = availableCharacters.filter(char => unlockedCharacterIds.includes(char.id));
 
   const handleSlotClick = (index: number) => {
     setSelectedSlotIndex(index);
@@ -21,11 +26,10 @@ function WorkshopScreen() {
     setIsModalOpen(false);
     setSelectedSlotIndex(null);
   };
-
-  // ▼▼▼【新規】スロットを空にするための関数 ▼▼▼
+  
   const handleEmptySlot = () => {
     if (selectedSlotIndex !== null) {
-      updateSlot(selectedSlotIndex, null); // contextにnullを送る
+      updateSlot(selectedSlotIndex, null);
     }
     setIsModalOpen(false);
     setSelectedSlotIndex(null);
@@ -41,14 +45,9 @@ function WorkshopScreen() {
             <div key={index} onClick={() => handleSlotClick(index)} className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 transition-colors">
               <p className="font-bold text-gray-500 mb-2">スロット {index + 1}</p>
               {slotCharacter ? (
-                <>
-                  <img src={slotCharacter.imageSrc} alt={slotCharacter.name} className="w-24 h-24 mx-auto object-contain" />
-                  <p className="mt-2 font-semibold">{slotCharacter.name}</p>
-                </>
+                <><img src={slotCharacter.imageSrc} alt={slotCharacter.name} className="w-24 h-24 mx-auto object-contain" /><p className="mt-2 font-semibold">{slotCharacter.name}</p></>
               ) : (
-                <div className="w-24 h-24 mx-auto flex items-center justify-center bg-gray-100 rounded-md">
-                  <p className="text-gray-400">空き</p>
-                </div>
+                <div className="w-24 h-24 mx-auto flex items-center justify-center bg-gray-100 rounded-md"><p className="text-gray-400">空き</p></div>
               )}
             </div>
           ))}
@@ -62,24 +61,19 @@ function WorkshopScreen() {
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setIsModalOpen(false)}>
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">キャラクターを選択</h2>
-            
-            {/* ▼▼▼【新規】スロットを空にするボタンを追加 ▼▼▼ */}
             <div className="mb-4 border-b pb-4">
-              <button
-                onClick={handleEmptySlot}
-                className="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
-              >
-                このスロットを空にする
-              </button>
+              <button onClick={handleEmptySlot} className="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-md hover:bg-red-600 transition-colors">このスロットを空にする</button>
             </div>
-
+            
+            {/* ▼▼▼ 購入済みのキャラクターだけを表示 ▼▼▼ */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {availableCharacters.map((char) => (
+              {unlockedCharacters.map((char) => (
                 <div key={char.id} className="p-3 bg-gray-100 rounded-lg text-center cursor-pointer hover:bg-gray-200 transition-colors" onClick={() => handleCharacterSelect(char)}>
                   <img src={char.imageSrc} alt={char.name} className="w-full h-24 object-contain mb-2" />
                   <p className="font-semibold text-gray-700">{char.name}</p>
                 </div>
               ))}
+              {unlockedCharacters.length === 0 && <p className='col-span-4 text-center text-gray-500'>アンロック済みのgifがありません。ショップで購入してください。</p>}
             </div>
           </div>
         </div>

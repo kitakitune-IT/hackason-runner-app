@@ -1,54 +1,70 @@
 import { createContext, useState, useEffect, useContext } from 'react';
-import type { ReactNode } from 'react';
-import type { Character } from '../data/characterData'; // "type"のインポートを修正
+import type {ReactNode} from 'react';
+import type { Character } from '../data/characterData';
 import { availableCharacters } from '../data/characterData';
 
-type Slots = [Character | null, Character | null, Character | null, Character | null];
+const hasPrice = (character: Character): character is Character & { price: number } => {
+  return typeof character.price === 'number';
+};
 
-// ▼▼▼【修正点1】updateSlotが `Character | null` を受け取れるように、型定義を変更 ▼▼▼
 interface CharacterContextType {
-  slots: Slots;
+  points: number;
+  unlockedCharacterIds: number[];
+  slots: (Character | null)[];
+  purchaseCharacter: (character: Character) => boolean;
   updateSlot: (index: number, character: Character | null) => void;
+  addPoints: (amount: number) => void; // ← 新しい命令を追加
 }
 
 const CharacterContext = createContext<CharacterContextType | undefined>(undefined);
-const STORAGE_KEY = 'character-slots';
+
+const SLOTS_KEY = 'character-slots';
+const POINTS_KEY = 'user-points';
+const UNLOCKED_KEY = 'unlocked-characters';
 
 export const CharacterProvider = ({ children }: { children: ReactNode }) => {
-  const [slots, setSlots] = useState<Slots>(() => {
-    try {
-      const savedSlotsJSON = window.localStorage.getItem(STORAGE_KEY);
-      if (savedSlotsJSON) {
-        const savedSlots = JSON.parse(savedSlotsJSON);
-        if (Array.isArray(savedSlots) && savedSlots.length === 4) {
-          return savedSlots as Slots;
-        }
-      }
-    } catch (error) {
-      console.error("Failed to load slots from localStorage", error);
-    }
-    return [availableCharacters[0], null, null, null];
+  const [points, setPoints] = useState<number>(() => {
+    const savedPoints = window.localStorage.getItem(POINTS_KEY);
+    return savedPoints ? parseInt(savedPoints, 10) : 100; // ← 初期ポイントを100に変更
   });
 
-  useEffect(() => {
-    try {
-      const slotsJSON = JSON.stringify(slots);
-      window.localStorage.setItem(STORAGE_KEY, slotsJSON);
-    } catch (error) {
-      console.error("Failed to save slots to localStorage", error);
-    }
-  }, [slots]);
+  const [unlockedCharacterIds, setUnlockedCharacterIds] = useState<number[]>(() => {
+    const savedUnlocked = window.localStorage.getItem(UNLOCKED_KEY);
+    return savedUnlocked ? JSON.parse(savedUnlocked) : [1];
+  });
 
-  // ▼▼▼【修正点2】関数の引数の型も、`Character | null` に変更 ▼▼▼
+  const [slots, setSlots] = useState<(Character | null)[]>(() => {
+    const savedSlots = window.localStorage.getItem(SLOTS_KEY);
+    return savedSlots ? JSON.parse(savedSlots) : [availableCharacters[0], null, null, null];
+  });
+
+  useEffect(() => { window.localStorage.setItem(POINTS_KEY, points.toString()); }, [points]);
+  useEffect(() => { window.localStorage.setItem(UNLOCKED_KEY, JSON.stringify(unlockedCharacterIds)); }, [unlockedCharacterIds]);
+  useEffect(() => { window.localStorage.setItem(SLOTS_KEY, JSON.stringify(slots)); }, [slots]);
+
+  const purchaseCharacter = (character: Character) => {
+    if (hasPrice(character) && points >= character.price && !unlockedCharacterIds.includes(character.id)) {
+      setPoints(prev => prev - character.price);
+      setUnlockedCharacterIds(prev => [...prev, character.id]);
+      return true;
+    }
+    return false;
+  };
+
   const updateSlot = (index: number, character: Character | null) => {
-    if (index >= 0 && index < 4) {
-      const newSlots = [...slots] as Slots;
-      newSlots[index] = character;
-      setSlots(newSlots);
+    const newSlots = [...slots];
+    newSlots[index] = character;
+    setSlots(newSlots);
+  };
+
+  // ▼▼▼【新規】ポイント加算処理 ▼▼▼
+  const addPoints = (amount: number) => {
+    if (amount > 0) {
+      setPoints(prev => prev + amount);
     }
   };
 
-  const value = { slots, updateSlot };
+  const value = { points, unlockedCharacterIds, slots, purchaseCharacter, updateSlot, addPoints };
 
   return (
     <CharacterContext.Provider value={value}>
@@ -57,10 +73,10 @@ export const CharacterProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useCharacterSlots = () => {
+export const useCharacterContext = () => {
   const context = useContext(CharacterContext);
-  if (context === undefined) {
-    throw new Error('useCharacterSlots must be used within a CharacterProvider');
+  if (!context) {
+    throw new Error('useCharacterContext must be used within a CharacterProvider');
   }
   return context;
 };

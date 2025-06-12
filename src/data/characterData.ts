@@ -9,6 +9,7 @@ export interface Character {
   id: number;
   name: string;
   imageSrc: string;
+  price?: number;
 }
 
 // 3. インポートした画像を、キャラクターのデータと紐づけてリスト化する
