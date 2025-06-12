@@ -8,7 +8,8 @@ function ShopScreen() {
   const { points, unlockedCharacterIds, purchaseCharacter } = useCharacterContext();
   const [message, setMessage] = useState('');
 
-  const shopCharacters = availableCharacters.map(char => ({ ...char, price: 0 }));
+// 変更後（データファイルに書かれた、そのままの価格を使う）
+  const shopCharacters = availableCharacters;
 
   const handlePurchase = (character: Character) => {
     if (unlockedCharacterIds.includes(character.id)) {
@@ -31,7 +32,7 @@ function ShopScreen() {
       
       {/* ▼▼▼【新規】注意書きを追加 ▼▼▼ */}
       <p className="text-center text-sm text-red-600 my-4 px-4">
-        現在は機能の確認のため、一時的に価格を固定しています。
+        現在は機能の確認のため、一時的に価格を調整しています。
       </p>
 
       {message && <p className="text-center text-green-600 mb-4">{message}</p>}
