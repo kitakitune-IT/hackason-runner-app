@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect, useContext } from 'react';
-import type {ReactNode} from 'react';
+import type{ReactNode} from 'react';
 import type { Character } from '../data/characterData';
 
 export interface RunRecord {
@@ -8,8 +8,6 @@ export interface RunRecord {
   points: number;
 }
 
-// ▼▼▼【新規】Type Guard関数をここで定義する ▼▼▼
-// この関数がtrueを返せば、TypeScriptはcharacterがpriceプロパティを持つと確信する
 const hasPrice = (character: Character): character is Character & { price: number } => {
   return typeof character.price === 'number';
 };
@@ -21,10 +19,13 @@ interface CharacterContextType {
   records: RunRecord[];
   unlockedCharacterIds: number[];
   slots: (Character | null)[];
+  tutorialStep: number;
+  setTutorialStep: (step: number) => void; // ← 新しい命令
   purchaseCharacter: (character: Character) => boolean;
   updateSlot: (index: number, character: Character | null) => void;
   addRecord: (record: RunRecord) => void;
   clearRecords: () => void;
+  resetAllData: () => void;
 }
 
 const CharacterContext = createContext<CharacterContextType | undefined>(undefined);
@@ -35,15 +36,18 @@ const UNLOCKED_KEY = 'unlocked-characters';
 const RECORDS_KEY = 'run-records';
 const TOTAL_DURATION_KEY = 'total-duration';
 const TOTAL_POINTS_KEY = 'total-points';
+const TUTORIAL_KEY = 'tutorial-step';
 
 export const CharacterProvider = ({ children }: { children: ReactNode }) => {
+  const [tutorialStep, setTutorialStep] = useState<number>(() => Number(window.localStorage.getItem(TUTORIAL_KEY)) || 0);
   const [points, setPoints] = useState<number>(() => Number(window.localStorage.getItem(POINTS_KEY)) || 100);
   const [totalRunDuration, setTotalRunDuration] = useState<number>(() => Number(window.localStorage.getItem(TOTAL_DURATION_KEY)) || 0);
   const [totalAccumulatedPoints, setTotalAccumulatedPoints] = useState<number>(() => Number(window.localStorage.getItem(TOTAL_POINTS_KEY)) || 0);
   const [records, setRecords] = useState<RunRecord[]>(() => JSON.parse(window.localStorage.getItem(RECORDS_KEY) || '[]'));
-  const [unlockedCharacterIds, setUnlockedCharacterIds] = useState<number[]>(() => JSON.parse(window.localStorage.getItem(UNLOCKED_KEY) || '[1]'));
+  const [unlockedCharacterIds, setUnlockedCharacterIds] = useState<number[]>(() => JSON.parse(window.localStorage.getItem(UNLOCKED_KEY) || '[]'));
   const [slots, setSlots] = useState<(Character | null)[]>(() => JSON.parse(window.localStorage.getItem(SLOTS_KEY) || '[null, null, null, null]'));
 
+  useEffect(() => { window.localStorage.setItem(TUTORIAL_KEY, tutorialStep.toString()); }, [tutorialStep]);
   useEffect(() => { window.localStorage.setItem(POINTS_KEY, points.toString()); }, [points]);
   useEffect(() => { window.localStorage.setItem(TOTAL_DURATION_KEY, totalRunDuration.toString()); }, [totalRunDuration]);
   useEffect(() => { window.localStorage.setItem(TOTAL_POINTS_KEY, totalAccumulatedPoints.toString()); }, [totalAccumulatedPoints]);
@@ -51,17 +55,13 @@ export const CharacterProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => { window.localStorage.setItem(UNLOCKED_KEY, JSON.stringify(unlockedCharacterIds)); }, [unlockedCharacterIds]);
   useEffect(() => { window.localStorage.setItem(SLOTS_KEY, JSON.stringify(slots)); }, [slots]);
 
-  // ▼▼▼【修正】Type Guardを使って、購入処理を書き換える ▼▼▼
   const purchaseCharacter = (character: Character) => {
-    // このif文を通過すれば、TypeScriptは、このブロック内では
-    // `character.price`が必ず数値であることを、完全に理解してくれる。
     if (hasPrice(character) && points >= character.price && !unlockedCharacterIds.includes(character.id)) {
       setPoints(prev => prev - character.price);
       setUnlockedCharacterIds(prev => [...prev, character.id]);
-      return true; // 購入成功
+      return true;
     }
-    
-    return false; // 条件を満たさない場合は失敗
+    return false;
   };
 
   const updateSlot = (index: number, character: Character | null) => {
@@ -81,11 +81,19 @@ export const CharacterProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const clearRecords = () => {
+  const clearRecords = () => { setRecords([]); };
+
+  const resetAllData = () => {
+    setPoints(100);
+    setTotalRunDuration(0);
+    setTotalAccumulatedPoints(0);
     setRecords([]);
+    setUnlockedCharacterIds([]);
+    setSlots([null, null, null, null]);
+    setTutorialStep(0);
   };
 
-  const value = { points, totalRunDuration, totalAccumulatedPoints, records, unlockedCharacterIds, slots, purchaseCharacter, updateSlot, addRecord, clearRecords };
+  const value = { points, totalRunDuration, totalAccumulatedPoints, records, unlockedCharacterIds, slots, tutorialStep, setTutorialStep, purchaseCharacter, updateSlot, addRecord, clearRecords, resetAllData };
 
   return <CharacterContext.Provider value={value}>{children}</CharacterContext.Provider>;
 };
