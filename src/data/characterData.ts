@@ -5,7 +5,7 @@ import emuCharacter from '../assets/emu-14760_256.gif';
 import horseCharacter from '../assets/horse_256.gif';
 import gundumCharacter from '../assets/オルガ・イツカ.gif';
 import racoonCharacter from '../assets/たぬき.gif';
-import pocketCharacter from '../assets/でんきねずみ.gif';
+import pocketCharacter from '../assets/でんきねずみ透過.gif';
 
 // 2. キャラクターの型を定義する
 export interface Character {
