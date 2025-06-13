@@ -243,13 +243,13 @@ function RunningScreen() {
             <button onClick={handleStartRun} className="bg-[#4CAF50] text-white font-bold py-3 px-10 rounded-full text-xl font-roboto shadow-lg">走行開始</button>
           ) : (
             <div className="flex flex-col items-center gap-4">
-              <button
-                onClick={handleJump}
-                disabled={isJumping}
-                className={`bg-blue-500 text-white font-bold py-2 px-6 rounded-full text-lg shadow-lg ${isJumping ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600 transition'}`}
-              >
-                ジャンプ！
-              </button>
+            <button
+               onClick={handleJump}
+               disabled={isJumping}
+               className={`bg-blue-500 text-white font-bold py-4 px-12 rounded-full text-lg shadow-lg ${isJumping ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600 transition'}`}
+             >
+               ジャンプ！
+             </button>
               <button onClick={handleEndRun} className="bg-[#f44336] text-white font-bold py-3 px-10 rounded-full text-xl font-roboto shadow-lg">走行終了</button>
             </div>
           )}

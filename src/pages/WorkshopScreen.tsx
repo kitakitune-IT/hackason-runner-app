@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCharacterContext } from '../contexts/CharacterContext';
 import { availableCharacters } from '../data/characterData';
 import type { Character } from '../data/characterData';
+import backgroundImage from '../images/旅支度.avif';
 
 function WorkshopScreen() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -112,8 +113,13 @@ function WorkshopScreen() {
     }
   };
 
+    const backgroundStyle = {
+    backgroundImage: `url(${backgroundImage})`
+  };
+
   return (
-    <div className="min-h-screen bg-[#f5f5f5] flex flex-col items-center p-4">
+    <div className="min-h-screen bg-cover bg-center bg-fixed flex flex-col items-center p-4" style={backgroundStyle}>
+       <div className="absolute inset-0 bg-black bg-opacity-40 z-0"></div>
       {tutorialStep === 3 && (
         <div className="bg-white shadow-lg rounded-lg p-4 my-4 border-2 border-blue-500 w-full max-w-2xl">
           <p className="text-center font-bold text-blue-600">「スロット1」をタップして、キャラクターをセットしましょう！</p>
@@ -138,26 +144,29 @@ function WorkshopScreen() {
         </div>
       )}
       
-      <h1 className="text-3xl font-bold my-8 font-mincho text-[#333333]">スロット編成</h1>
-      {message && <p className="text-center text-red-500 mb-4 font-bold">{message}</p>}
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl mb-8">
-        <p className="text-center text-gray-600 mb-6">走行画面で使うキャラクターを4つのスロットにセットしてください。</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {slots.map((slotCharacter, index) => (
-            <div key={index} onClick={() => handleSlotClick(index)} className={`border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 transition-colors ${getSlotClass(index)}`}>
-              <p className="font-bold text-gray-500 mb-2">スロット {index + 1}</p>
-              {slotCharacter ? ( <><img src={slotCharacter.imageSrc} alt={slotCharacter.name} className="w-24 h-24 mx-auto object-contain" /><p className="mt-2 font-semibold">{slotCharacter.name}</p></> ) : ( <div className="w-24 h-24 mx-auto flex items-center justify-center bg-gray-100 rounded-md"><p className="text-gray-400">空き</p></div> )}
-            </div>
-          ))}
+      <div className="relative z-10 flex flex-col items-center w-full">
+        <h1 className="text-4xl font-bold my-8 font-mincho text-white drop-shadow-lg">ワークショップ</h1>
+        {message && <p className="text-center text-red-300 bg-black bg-opacity-50 rounded-md py-2 px-4 mb-4 font-bold">{message}</p>}
+        
+        {/* ▼▼▼【変更】ガラス風UIに変更 ▼▼▼ */}
+        <div className="bg-white bg-opacity-20 backdrop-blur-md border border-white border-opacity-30 rounded-lg shadow-lg p-6 w-full max-w-2xl mb-8">
+          <p className="text-center text-gray-200 mb-6 drop-shadow-md">走行画面で使うキャラクターを4つのスロットにセットしてください。</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {slots.map((slotCharacter, index) => (
+              <div key={index} onClick={() => handleSlotClick(index)} className={`border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-white hover:bg-opacity-20 transition-colors ${getSlotClass(index)}`}>
+                <p className="font-bold text-gray-200 mb-2">スロット {index + 1}</p>
+                {slotCharacter ? ( <><img src={slotCharacter.imageSrc} alt={slotCharacter.name} className="w-24 h-24 mx-auto object-contain" /><p className="mt-2 font-semibold text-white">{slotCharacter.name}</p></> ) : ( <div className="w-24 h-24 mx-auto flex items-center justify-center bg-black bg-opacity-20 rounded-md"><p className="text-gray-400">空き</p></div> )}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
 
       <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl mb-8">
-        <h2 className="text-xl font-bold text-gray-700 mb-4 border-b pb-2">オリジナルキャラクターの追加</h2>
+        <h2 className="text-xl font-bold text-gray-700 mb-4 border-b pb-2">オリジナル画像の追加</h2>
         <div className="flex flex-col sm:flex-row gap-4 items-center">
             <input 
               type="text" 
-              placeholder="キャラクター名" 
+              placeholder="画像名" 
               value={newCharName}
               onChange={(e) => setNewCharName(e.target.value)}
               className="p-2 border rounded-md w-full sm:w-auto flex-grow"
@@ -185,7 +194,7 @@ function WorkshopScreen() {
       </div>
 
       <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl mb-8">
-        <h2 className="text-xl font-bold text-gray-700 mb-4 border-b pb-2">オリジナルキャラクターの管理</h2>
+        <h2 className="text-xl font-bold text-gray-700 mb-4 border-b pb-2">オリジナル画像の管理</h2>
         {customCharacters.length > 0 ? (
           <div className="space-y-3">
             {customCharacters.map(char => (
@@ -202,15 +211,16 @@ function WorkshopScreen() {
             ))}
           </div>
         ) : (
-          <p className="text-center text-gray-500">追加されたオリジナルキャラクターはありません。</p>
+          <p className="text-center text-gray-500">追加されたオリジナル画像はありません。</p>
         )}
       </div>
 
-      <Link to="/" className={`w-full max-w-2xl ${tutorialStep === 3 ? 'pointer-events-none' : ''}`}>
-        <button className={`w-full bg-[#9C27B0] hover:bg-[#7B1FA2] text-white font-bold py-4 px-8 rounded-lg text-xl font-roboto ${tutorialStep === 3 ? 'opacity-50 cursor-not-allowed' : ''}`}>
-          ホームに戻る
-        </button>
-      </Link>
+        <Link to="/" className={`w-full max-w-2xl ${tutorialStep === 3 ? 'pointer-events-none' : ''}`}>
+          <button className={`w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-8 rounded-lg text-xl font-roboto shadow-lg ${tutorialStep === 3 ? 'opacity-50 cursor-not-allowed' : ''}`}>
+            ホームに戻る
+          </button>
+        </Link>
+      </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={handleCloseModal}>
