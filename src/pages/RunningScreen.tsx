@@ -240,7 +240,7 @@ function RunningScreen() {
       <div className="absolute inset-x-0 bottom-4 flex flex-col justify-end items-center p-4 pointer-events-none">
         <div className="flex flex-col items-center gap-4 pointer-events-auto">
           {!isRunning ? (
-            <button onClick={handleStartRun} className="bg-[#4CAF50] text-white font-bold py-3 px-10 rounded-full text-xl font-roboto shadow-lg">走行開始</button>
+            <button onClick={handleStartRun} className="bg-[#4CAF50] text-white font-bold py-3 px-10 rounded-full text-lg font-roboto shadow-lg">走行開始</button>
           ) : (
             // ▼▼▼【変更】走行中のボタンレイアウトを変更 ▼▼▼
             <div className="flex flex-row items-center justify-center gap-8">
@@ -250,12 +250,12 @@ function RunningScreen() {
                   onClick={handleJump}
                   disabled={isJumping}
                   // 開始/終了ボタンと同じサイズに
-                  className={`bg-blue-500 text-white font-bold py-3 px-10 rounded-full text-xl font-roboto shadow-lg ${isJumping ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600 transition'}`}
+                  className={`bg-blue-500 text-white font-bold py-3 px-10 rounded-full text-lg font-roboto shadow-lg ${isJumping ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600 transition'}`}
                 >
                   ジャンプ
                 </button>
               )}
-              <button onClick={handleEndRun} className="bg-[#f44336] text-white font-bold py-3 px-10 rounded-full text-xl font-roboto shadow-lg">走行終了</button>
+              <button onClick={handleEndRun} className="bg-[#f44336] text-white font-bold py-3 px-10 rounded-full text-lg font-roboto shadow-lg">走行終了</button>
             </div>
           )}
         </div>
