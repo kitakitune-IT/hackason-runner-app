@@ -1,6 +1,10 @@
+// ▼▼▼【変更】ReactNodeを型としてインポート ▼▼▼
 import { createContext, useState, useEffect, useContext } from 'react';
-import type{ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import type { Character } from '../data/characterData';
+import { addCharacter, getAllCharacters, deleteCharacter ,clearAllCharacters} from '../utils/db';
+import type { CustomCharacterEntity } from '../utils/db';
+
 
 export interface RunRecord {
   date: string;
@@ -20,7 +24,10 @@ interface CharacterContextType {
   unlockedCharacterIds: number[];
   slots: (Character | null)[];
   tutorialStep: number;
-  setTutorialStep: (step: number) => void; // ← 新しい命令
+  customCharacters: Character[]; 
+  addCustomCharacter: (name: string, imageFile: File) => Promise<void>;
+  deleteCustomCharacter: (dbId: number) => Promise<void>;
+  setTutorialStep: (step: number) => void;
   purchaseCharacter: (character: Character) => boolean;
   updateSlot: (index: number, character: Character | null) => void;
   addRecord: (record: RunRecord) => void;
@@ -38,15 +45,26 @@ const TOTAL_DURATION_KEY = 'total-duration';
 const TOTAL_POINTS_KEY = 'total-points';
 const TUTORIAL_KEY = 'tutorial-step';
 
+
 export const CharacterProvider = ({ children }: { children: ReactNode }) => {
-  const [tutorialStep, setTutorialStep] = useState<number>(() => Number(window.localStorage.getItem(TUTORIAL_KEY)) || 0);
+  // ▼▼▼【修正】リンターの誤検知を抑制するコメントを追加 ▼▼▼
+  // これらのstateはContextのvalueとして外部のコンポーネントで利用されるため、実際には未使用ではありません。
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  const [tutorialStep, setTutorialStepState] = useState<number>(() => Number(window.localStorage.getItem(TUTORIAL_KEY)) || 0);
   const [points, setPoints] = useState<number>(() => Number(window.localStorage.getItem(POINTS_KEY)) || 100);
   const [totalRunDuration, setTotalRunDuration] = useState<number>(() => Number(window.localStorage.getItem(TOTAL_DURATION_KEY)) || 0);
   const [totalAccumulatedPoints, setTotalAccumulatedPoints] = useState<number>(() => Number(window.localStorage.getItem(TOTAL_POINTS_KEY)) || 0);
   const [records, setRecords] = useState<RunRecord[]>(() => JSON.parse(window.localStorage.getItem(RECORDS_KEY) || '[]'));
   const [unlockedCharacterIds, setUnlockedCharacterIds] = useState<number[]>(() => JSON.parse(window.localStorage.getItem(UNLOCKED_KEY) || '[]'));
   const [slots, setSlots] = useState<(Character | null)[]>(() => JSON.parse(window.localStorage.getItem(SLOTS_KEY) || '[null, null, null, null]'));
+  const [customCharacters, setCustomCharacters] = useState<Character[]>([]);
+  /* eslint-enable @typescript-eslint/no-unused-vars */
 
+  // setTutorialStepがコンテキスト内で再定義されるため、元のuseStateのセッターを別名にする
+  const setTutorialStep = (step: number) => {
+    setTutorialStepState(step);
+  };
+  
   useEffect(() => { window.localStorage.setItem(TUTORIAL_KEY, tutorialStep.toString()); }, [tutorialStep]);
   useEffect(() => { window.localStorage.setItem(POINTS_KEY, points.toString()); }, [points]);
   useEffect(() => { window.localStorage.setItem(TOTAL_DURATION_KEY, totalRunDuration.toString()); }, [totalRunDuration]);
@@ -54,6 +72,40 @@ export const CharacterProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => { window.localStorage.setItem(RECORDS_KEY, JSON.stringify(records)); }, [records]);
   useEffect(() => { window.localStorage.setItem(UNLOCKED_KEY, JSON.stringify(unlockedCharacterIds)); }, [unlockedCharacterIds]);
   useEffect(() => { window.localStorage.setItem(SLOTS_KEY, JSON.stringify(slots)); }, [slots]);
+
+  const loadCustomCharacters = async () => {
+    const entities = await getAllCharacters();
+    const characters: Character[] = entities.map((entity: CustomCharacterEntity) => ({
+      id: entity.id!,
+      name: entity.name,
+      imageSrc: URL.createObjectURL(entity.imageFile),
+    }));
+    setCustomCharacters(characters);
+  };
+
+  useEffect(() => {
+    loadCustomCharacters();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      customCharacters.forEach(char => {
+        if (char.imageSrc.startsWith('blob:')) {
+          URL.revokeObjectURL(char.imageSrc);
+        }
+      });
+    };
+  }, [customCharacters]);
+  
+  const addCustomCharacter = async (name: string, imageFile: File) => {
+    await addCharacter(name, imageFile);
+    await loadCustomCharacters();
+  };
+
+  const deleteCustomCharacter = async (dbId: number) => {
+    await deleteCharacter(dbId);
+    await loadCustomCharacters();
+  };
 
   const purchaseCharacter = (character: Character) => {
     if (hasPrice(character) && points >= character.price && !unlockedCharacterIds.includes(character.id)) {
@@ -83,7 +135,9 @@ export const CharacterProvider = ({ children }: { children: ReactNode }) => {
 
   const clearRecords = () => { setRecords([]); };
 
-  const resetAllData = () => {
+  // ▼▼▼【変更】resetAllDataをasync関数にし、DBの削除処理を追加 ▼▼▼
+  const resetAllData = async () => {
+    // localStorageに保存されているデータをリセット
     setPoints(100);
     setTotalRunDuration(0);
     setTotalAccumulatedPoints(0);
@@ -91,9 +145,31 @@ export const CharacterProvider = ({ children }: { children: ReactNode }) => {
     setUnlockedCharacterIds([]);
     setSlots([null, null, null, null]);
     setTutorialStep(0);
-  };
 
-  const value = { points, totalRunDuration, totalAccumulatedPoints, records, unlockedCharacterIds, slots, tutorialStep, setTutorialStep, purchaseCharacter, updateSlot, addRecord, clearRecords, resetAllData };
+    // IndexedDBに保存されているカスタムキャラクターをすべて削除
+    await clearAllCharacters();
+    // Reactのstateも空にする
+    setCustomCharacters([]);
+  };
+  
+  const value: CharacterContextType = { 
+    points, 
+    totalRunDuration, 
+    totalAccumulatedPoints, 
+    records, 
+    unlockedCharacterIds, 
+    slots, 
+    tutorialStep, 
+    customCharacters,
+    addCustomCharacter,
+    deleteCustomCharacter,
+    setTutorialStep, 
+    purchaseCharacter, 
+    updateSlot, 
+    addRecord, 
+    clearRecords, 
+    resetAllData 
+  };
 
   return <CharacterContext.Provider value={value}>{children}</CharacterContext.Provider>;
 };

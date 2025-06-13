@@ -27,10 +27,11 @@ function HomeScreen() {
     }
   }, [tutorialStep, unlockedCharacterIds, slots, setTutorialStep, isTutorialActive]);
 
-  const handleDeleteAllData = () => {
+  // ▼▼▼【変更】resetAllDataをawaitで待つように、関数をasyncにする ▼▼▼
+  const handleDeleteAllData = async () => {
     if (window.confirm('本当にすべてのデータを削除しますか？\nこの操作は元に戻せません。')) {
       if (window.confirm('最終確認：本当によろしいですか？')) {
-        resetAllData();
+        await resetAllData(); // DB操作の完了を待つ
         window.location.reload();
       }
     }
