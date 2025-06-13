@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCharacterContext } from '../contexts/CharacterContext';
 import { availableCharacters } from '../data/characterData';
 import type { Character } from '../data/characterData';
-import backgroundImage from '../images/旅支度.avif';
+import backgroundImage from '../images/スーツケース.avif';
 
 function WorkshopScreen() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
