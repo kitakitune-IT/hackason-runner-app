@@ -2,7 +2,7 @@
 import { createContext, useState, useEffect, useContext } from 'react';
 import type { ReactNode } from 'react';
 import type { Character } from '../data/characterData';
-import { addCharacter, getAllCharacters, deleteCharacter } from '../utils/db';
+import { addCharacter, getAllCharacters, deleteCharacter ,clearAllCharacters} from '../utils/db';
 import type { CustomCharacterEntity } from '../utils/db';
 
 
@@ -135,7 +135,9 @@ export const CharacterProvider = ({ children }: { children: ReactNode }) => {
 
   const clearRecords = () => { setRecords([]); };
 
-  const resetAllData = () => {
+  // ▼▼▼【変更】resetAllDataをasync関数にし、DBの削除処理を追加 ▼▼▼
+  const resetAllData = async () => {
+    // localStorageに保存されているデータをリセット
     setPoints(100);
     setTotalRunDuration(0);
     setTotalAccumulatedPoints(0);
@@ -143,6 +145,11 @@ export const CharacterProvider = ({ children }: { children: ReactNode }) => {
     setUnlockedCharacterIds([]);
     setSlots([null, null, null, null]);
     setTutorialStep(0);
+
+    // IndexedDBに保存されているカスタムキャラクターをすべて削除
+    await clearAllCharacters();
+    // Reactのstateも空にする
+    setCustomCharacters([]);
   };
   
   const value: CharacterContextType = { 
