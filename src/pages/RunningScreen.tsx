@@ -5,7 +5,6 @@ import { useCharacterContext } from '../contexts/CharacterContext';
 const SIZE_STEP = 24;
 const MIN_SIZE = 32;
 const MAX_SIZE = 512;
-// ▼▼▼【ジャンプ機能】定数を追加 ▼▼▼
 const JUMP_STRENGTH = -5.0; 
 const GRAVITY = 0.0625;
 
@@ -24,12 +23,13 @@ function RunningScreen() {
   const [isSlotModalOpen, setIsSlotModalOpen] = useState<boolean>(false);
   const [isUiVisible, setIsUiVisible] = useState<boolean>(true);
 
-  // ▼▼▼【ジャンプ機能】新しいstateを追加 ▼▼▼
   const [isJumping, setIsJumping] = useState<boolean>(false);
   const [jumpVelocity, setJumpVelocity] = useState<number>(0);
   const [startYPosition, setStartYPosition] = useState<number>(0);
   const [characterDisplayPosition, setCharacterDisplayPosition] = useState<number>(50);
 
+  const [isSizeDragging, setIsSizeDragging] = useState<boolean>(false);
+  const sizeSliderRef = useRef<HTMLDivElement | null>(null);
 
   const currentCharacter = slots[activeSlotIndex];
 
@@ -37,11 +37,11 @@ function RunningScreen() {
     const element = document.documentElement;
     if (element.requestFullscreen) {
       element.requestFullscreen();
-    } else if ((element as any).mozRequestFullScreen) {
+    } else if ((element as any).mozRequestFullScreen) { // Firefox
       (element as any).mozRequestFullScreen();
-    } else if ((element as any).webkitRequestFullscreen) {
+    } else if ((element as any).webkitRequestFullscreen) { // Chrome, Safari, Opera
       (element as any).webkitRequestFullscreen();
-    } else if ((element as any).msRequestFullscreen) {
+    } else if ((element as any).msRequestFullscreen) { // IE/Edge
       (element as any).msRequestFullscreen();
     }
   };
@@ -71,22 +71,17 @@ function RunningScreen() {
     }
   }, []);
 
-  // ▼▼▼【ジャンプ機能】ジャンプアニメーションのロジックを追加 ▼▼▼
   useEffect(() => {
     let animationFrameId: number;
-
     const animateJump = () => {
       if (!isJumping) return;
-
       setCharacterDisplayPosition(prev => {
         let newPosition = prev + jumpVelocity;
         setJumpVelocity(prevVel => prevVel + GRAVITY);
-
         if (newPosition < 0) {
           newPosition = 0;
           setJumpVelocity(0);
         }
-
         if (newPosition >= startYPosition && jumpVelocity > 0) {
           setIsJumping(false);
           setJumpVelocity(0);
@@ -94,21 +89,16 @@ function RunningScreen() {
         }
         return newPosition;
       });
-
       animationFrameId = requestAnimationFrame(animateJump);
     };
-
     if (isJumping) {
       animationFrameId = requestAnimationFrame(animateJump);
     }
-
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
   }, [isJumping, jumpVelocity, startYPosition]);
 
-
-  // ▼▼▼【ジャンプ機能】スライダー操作がジャンプに影響しないように修正 ▼▼▼
   const updateCharacterPosition = useCallback((clientY: number) => {
     if (!sliderRef.current) return;
     const sliderRect = sliderRef.current.getBoundingClientRect();
@@ -119,13 +109,29 @@ function RunningScreen() {
     if (!isJumping) {
       setCharacterDisplayPosition(percentage);
     }
-  }, [isJumping]); // isJumpingを依存配列に追加
+  }, [isJumping]);
+
+  const updateCharacterSize = useCallback((clientY: number) => {
+    if (!sizeSliderRef.current) return;
+    const sliderRect = sizeSliderRef.current.getBoundingClientRect();
+    const relativeY = clientY - sliderRect.top;
+    const percentage = Math.max(0, Math.min(100, (relativeY / sliderRect.height) * 100));
+    const newSize = MAX_SIZE - (percentage / 100) * (MAX_SIZE - MIN_SIZE);
+    const snappedSize = Math.round(newSize / SIZE_STEP) * SIZE_STEP;
+    setCharacterSize(snappedSize);
+  }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); updateCharacterPosition(e.clientY); }, [updateCharacterPosition]);
   const handleMouseMove = useCallback((e: MouseEvent) => { if (isDragging) { e.preventDefault(); updateCharacterPosition(e.clientY); } }, [isDragging, updateCharacterPosition]);
   const handleMouseUp = useCallback(() => { setIsDragging(false); }, []);
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); updateCharacterPosition(e.touches[0].clientY); }, [updateCharacterPosition]);
   const handleTouchMove = useCallback((e: TouchEvent) => { if (isDragging) { e.preventDefault(); updateCharacterPosition(e.touches[0].clientY); } }, [isDragging, updateCharacterPosition]);
+  
+  const handleSizeMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsSizeDragging(true); updateCharacterSize(e.clientY); }, [updateCharacterSize]);
+  const handleSizeMouseMove = useCallback((e: MouseEvent) => { if (isSizeDragging) { e.preventDefault(); updateCharacterSize(e.clientY); } }, [isSizeDragging, updateCharacterSize]);
+  const handleSizeMouseUp = useCallback(() => { setIsSizeDragging(false); }, []);
+  const handleSizeTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsSizeDragging(true); updateCharacterSize(e.touches[0].clientY); }, [updateCharacterSize]);
+  const handleSizeTouchMove = useCallback((e: TouchEvent) => { if (isSizeDragging) { e.preventDefault(); updateCharacterSize(e.touches[0].clientY); } }, [isSizeDragging, updateCharacterSize]);
 
   useEffect(() => {
     if (isDragging) {
@@ -142,7 +148,21 @@ function RunningScreen() {
     }
   }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove]);
 
-  // ▼▼▼【ジャンプ機能】走行開始時にキャラクターの表示位置を合わせる処理を追加 ▼▼▼
+  useEffect(() => {
+    if (isSizeDragging) {
+      document.addEventListener("mousemove", handleSizeMouseMove);
+      document.addEventListener("mouseup", handleSizeMouseUp);
+      document.addEventListener("touchmove", handleSizeTouchMove, { passive: false });
+      document.addEventListener("touchend", handleSizeMouseUp);
+      return () => {
+        document.removeEventListener("mousemove", handleSizeMouseMove);
+        document.removeEventListener("mouseup", handleSizeMouseUp);
+        document.removeEventListener("touchmove", handleSizeTouchMove);
+        document.removeEventListener("touchend", handleSizeMouseUp);
+      };
+    }
+  }, [isSizeDragging, handleSizeMouseMove, handleSizeMouseUp, handleSizeTouchMove]);
+
   const handleStartRun = () => {
     enterFullscreen();
     setError(null);
@@ -161,7 +181,6 @@ function RunningScreen() {
     navigate(`/result?${params.toString()}`);
   };
   
-  // ▼▼▼【ジャンプ機能】ジャンプを開始する関数を追加 ▼▼▼
   const handleJump = () => {
     if (!isJumping && isRunning) {
       setStartYPosition(characterPosition);
@@ -169,6 +188,8 @@ function RunningScreen() {
       setIsJumping(true);
     }
   };
+
+  const sizeKnobPosition = ((MAX_SIZE - characterSize) / (MAX_SIZE - MIN_SIZE)) * 100;
 
   return (
     <div className="relative h-screen w-full bg-black overflow-hidden">
@@ -178,7 +199,6 @@ function RunningScreen() {
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
         </Link>
       </div>
-      {/* ▼▼▼【ジャンプ機能】キャラクターの表示位置をcharacterDisplayPositionで制御するよう変更 ▼▼▼ */}
       <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ top: `${characterDisplayPosition}%`, width: `${characterSize}px`, height: `${characterSize}px` }}>
         {currentCharacter ? (
           <img src={currentCharacter.imageSrc} alt={currentCharacter.name} className="w-full h-full object-contain" />
@@ -186,32 +206,43 @@ function RunningScreen() {
           <div className="w-full h-full bg-red-500 bg-opacity-50 flex items-center justify-center text-white text-center rounded-lg">スロットが空です</div>
         )}
       </div>
-      <div ref={sliderRef} className="absolute right-4 top-4 bottom-4 w-12 bg-black bg-opacity-50 cursor-pointer rounded-lg z-50" onMouseDown={handleMouseDown} onTouchStart={handleTouchStart} >
-        <div className="absolute w-8 h-8 bg-white rounded-full left-1/2" style={{ top: `${characterPosition}%`, transform: "translate(-50%, -50%)", cursor: isDragging ? "grabbing" : "grab" }} />
-      </div>
+
+      {isUiVisible && (
+        <>
+          <div 
+            ref={sizeSliderRef} 
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-1/2 bg-gray-200 bg-opacity-50 cursor-pointer rounded-lg z-50 flex justify-center py-4"
+            onMouseDown={handleSizeMouseDown} 
+            onTouchStart={handleSizeTouchStart} 
+          >
+            <span className="absolute -top-6 text-white text-sm select-none">サイズ</span>
+            <div 
+              className="absolute w-10 h-10 bg-blue-500 rounded-full left-1/2 -translate-x-1/2 -translate-y-1/2 shadow-lg"
+              style={{ top: `${sizeKnobPosition}%`, cursor: isSizeDragging ? "grabbing" : "grab" }} 
+            />
+          </div>
+
+          <div 
+            ref={sliderRef} 
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-1/2 bg-gray-200 bg-opacity-50 cursor-pointer rounded-lg z-50 flex justify-center py-4"
+            onMouseDown={handleMouseDown} 
+            onTouchStart={handleTouchStart} 
+          >
+            <span className="absolute -top-6 text-white text-sm select-none">位置</span>
+            <div 
+              className="absolute w-10 h-10 bg-blue-500 rounded-full left-1/2 -translate-x-1/2 -translate-y-1/2 shadow-lg"
+              style={{ top: `${characterPosition}%`, cursor: isDragging ? "grabbing" : "grab" }} 
+            />
+          </div>
+        </>
+      )}
+
       <div className="absolute inset-0 flex flex-col justify-end items-center p-4 pointer-events-none">
         <div className="flex flex-col items-center gap-4 pointer-events-auto">
-          {isUiVisible && (
-            <div className="flex flex-col items-center gap-4 mb-4">
-              <div className='w-64'>
-                <input
-                  type="range"
-                  min={MIN_SIZE}
-                  max={MAX_SIZE}
-                  step={SIZE_STEP}
-                  value={characterSize}
-                  onChange={(e) => setCharacterSize(parseInt(e.target.value, 10))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                />
-              </div>
-            </div>
-          )}
           {!isRunning ? (
             <button onClick={handleStartRun} className="bg-[#4CAF50] text-white font-bold py-3 px-10 rounded-full text-xl font-roboto shadow-lg">走行開始</button>
           ) : (
-            // ▼▼▼【ジャンプ機能】走行終了ボタンとジャンプボタンをまとめる ▼▼▼
             <div className="flex flex-col items-center gap-4">
-              <button onClick={handleEndRun} className="bg-[#f44336] text-white font-bold py-3 px-10 rounded-full text-xl font-roboto shadow-lg">走行終了</button>
               <button
                 onClick={handleJump}
                 disabled={isJumping}
@@ -219,10 +250,12 @@ function RunningScreen() {
               >
                 ジャンプ！
               </button>
+              <button onClick={handleEndRun} className="bg-[#f44336] text-white font-bold py-3 px-10 rounded-full text-xl font-roboto shadow-lg">走行終了</button>
             </div>
           )}
         </div>
       </div>
+      
       <div className="absolute bottom-4 left-4 z-50 flex gap-2 pointer-events-auto">
         <button onClick={() => setIsUiVisible(prev => !prev)} className="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition">
           {isUiVisible ? ( <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> ) : ( <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59" /></svg> )}
@@ -233,7 +266,9 @@ function RunningScreen() {
           </button>
         )}
       </div>
+
       {error && (<div className="absolute top-16 left-1/2 -translate-x-1/2 bg-[#f44336] text-white p-4 rounded-lg font-roboto z-50 max-w-[calc(100%-2rem)] text-center shadow-lg">{error}</div>)}
+      
       {isSlotModalOpen && (
         <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setIsSlotModalOpen(false)}>
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
