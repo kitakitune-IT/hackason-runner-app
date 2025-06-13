@@ -5,10 +5,9 @@ import { availableCharacters } from '../data/characterData';
 import type { Character } from '../data/characterData';
 
 function WorkshopScreen() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { slots, updateSlot, unlockedCharacterIds, tutorialStep, setTutorialStep, customCharacters, addCustomCharacter, deleteCustomCharacter } = useCharacterContext();
   
-  // ▼▼▼【修正】リンターの誤検知を抑制するコメントを追加 ▼▼▼
-  // isModalOpen, selectedSlotIndexはJSX内やイベントハンドラ内で使用されています。
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isModalOpen, setIsModalOpen] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -121,16 +120,19 @@ function WorkshopScreen() {
         </div>
       )}
 
+      {/* ▼▼▼【変更】チュートリアル完了メッセージの表示方法を修正 ▼▼▼ */}
       {tutorialStep === 4 && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div 
-            className="bg-white rounded-lg shadow-xl p-8 max-w-xs mx-auto pointer-events-auto cursor-pointer"
-            onClick={() => setTutorialStep(5)}
-          >
+        // 背景をクリックしてもチュートリアルが完了するように、オーバーレイ全体にonClickを設定
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 cursor-pointer"
+          onClick={() => setTutorialStep(5)}
+        >
+          {/* メッセージボックス自体がクリックイベントを伝播させないようにするには e.stopPropagation() を使うが、今回はどこをクリックしても閉じるようにするため不要 */}
+          <div className="bg-white rounded-lg shadow-xl p-8 max-w-xs mx-auto">
             <p className="text-gray-800 text-lg text-center font-bold">
               これで、走行の準備は完了です！<br/>
               このアプリをお楽しみください！<br/>
-              <span className="text-sm mt-4 block text-gray-600">(タップしてチュートリアルを終了)</span>
+              <span className="text-sm mt-4 block text-gray-600">(このメッセージをタップまたは背景をクリックしてチュートリアルを終了)</span>
             </p>
           </div>
         </div>
