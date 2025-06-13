@@ -5,6 +5,9 @@ import { useCharacterContext } from '../contexts/CharacterContext';
 const SIZE_STEP = 24;
 const MIN_SIZE = 32;
 const MAX_SIZE = 512;
+// ▼▼▼【ジャンプ機能】定数を追加 ▼▼▼
+const JUMP_STRENGTH = -5.0; 
+const GRAVITY = 0.0625;
 
 function RunningScreen() {
   const navigate = useNavigate();
@@ -21,17 +24,24 @@ function RunningScreen() {
   const [isSlotModalOpen, setIsSlotModalOpen] = useState<boolean>(false);
   const [isUiVisible, setIsUiVisible] = useState<boolean>(true);
 
+  // ▼▼▼【ジャンプ機能】新しいstateを追加 ▼▼▼
+  const [isJumping, setIsJumping] = useState<boolean>(false);
+  const [jumpVelocity, setJumpVelocity] = useState<number>(0);
+  const [startYPosition, setStartYPosition] = useState<number>(0);
+  const [characterDisplayPosition, setCharacterDisplayPosition] = useState<number>(50);
+
+
   const currentCharacter = slots[activeSlotIndex];
-    // ▼▼▼【新規】フルスクリーンを制御する関数 ▼▼▼
+
   const enterFullscreen = () => {
-    const element = document.documentElement; // ページ全体を対象にする
+    const element = document.documentElement;
     if (element.requestFullscreen) {
       element.requestFullscreen();
-    } else if ((element as any).mozRequestFullScreen) { // Firefox
+    } else if ((element as any).mozRequestFullScreen) {
       (element as any).mozRequestFullScreen();
-    } else if ((element as any).webkitRequestFullscreen) { // Chrome, Safari, Opera
+    } else if ((element as any).webkitRequestFullscreen) {
       (element as any).webkitRequestFullscreen();
-    } else if ((element as any).msRequestFullscreen) { // IE/Edge
+    } else if ((element as any).msRequestFullscreen) {
       (element as any).msRequestFullscreen();
     }
   };
@@ -54,7 +64,6 @@ function RunningScreen() {
         .then((stream: MediaStream) => { if (videoRef.current) videoRef.current.srcObject = stream; })
         .catch((err: any) => { console.error(err); setError("カメラの起動に失敗しました"); });
     }
-        // このページを離れるときに、フルスクリーンを解除する
     return () => {
         if(document.fullscreenElement) {
             exitFullscreen();
@@ -62,13 +71,55 @@ function RunningScreen() {
     }
   }, []);
 
+  // ▼▼▼【ジャンプ機能】ジャンプアニメーションのロジックを追加 ▼▼▼
+  useEffect(() => {
+    let animationFrameId: number;
+
+    const animateJump = () => {
+      if (!isJumping) return;
+
+      setCharacterDisplayPosition(prev => {
+        let newPosition = prev + jumpVelocity;
+        setJumpVelocity(prevVel => prevVel + GRAVITY);
+
+        if (newPosition < 0) {
+          newPosition = 0;
+          setJumpVelocity(0);
+        }
+
+        if (newPosition >= startYPosition && jumpVelocity > 0) {
+          setIsJumping(false);
+          setJumpVelocity(0);
+          return startYPosition;
+        }
+        return newPosition;
+      });
+
+      animationFrameId = requestAnimationFrame(animateJump);
+    };
+
+    if (isJumping) {
+      animationFrameId = requestAnimationFrame(animateJump);
+    }
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [isJumping, jumpVelocity, startYPosition]);
+
+
+  // ▼▼▼【ジャンプ機能】スライダー操作がジャンプに影響しないように修正 ▼▼▼
   const updateCharacterPosition = useCallback((clientY: number) => {
     if (!sliderRef.current) return;
     const sliderRect = sliderRef.current.getBoundingClientRect();
     const relativeY = clientY - sliderRect.top;
     const percentage = Math.max(0, Math.min(100, (relativeY / sliderRect.height) * 100));
     setCharacterPosition(percentage);
-  }, []);
+    
+    if (!isJumping) {
+      setCharacterDisplayPosition(percentage);
+    }
+  }, [isJumping]); // isJumpingを依存配列に追加
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); updateCharacterPosition(e.clientY); }, [updateCharacterPosition]);
   const handleMouseMove = useCallback((e: MouseEvent) => { if (isDragging) { e.preventDefault(); updateCharacterPosition(e.clientY); } }, [isDragging, updateCharacterPosition]);
@@ -91,17 +142,17 @@ function RunningScreen() {
     }
   }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove]);
 
-  // ▼▼▼【修正】走行開始時にフルスクリーンにする ▼▼▼
+  // ▼▼▼【ジャンプ機能】走行開始時にキャラクターの表示位置を合わせる処理を追加 ▼▼▼
   const handleStartRun = () => {
-    enterFullscreen(); // フルスクリーンに移行
+    enterFullscreen();
     setError(null);
     setStartTime(Date.now());
     setIsRunning(true);
+    setCharacterDisplayPosition(characterPosition);
   };
 
-  // ▼▼▼【修正】走行終了時にフルスクリーンを解除する ▼▼▼
   const handleEndRun = () => {
-    exitFullscreen(); // フルスクリーンを解除
+    exitFullscreen();
     if (!startTime) {
       setError("走行開始情報が記録されていません。");
       return;
@@ -109,8 +160,15 @@ function RunningScreen() {
     const params = new URLSearchParams({ startTime: startTime.toString() });
     navigate(`/result?${params.toString()}`);
   };
-
-  // ▼▼▼【削除】increaseSize と decreaseSize 関数は、スライダーに役割を譲ったため不要になった ▼▼▼
+  
+  // ▼▼▼【ジャンプ機能】ジャンプを開始する関数を追加 ▼▼▼
+  const handleJump = () => {
+    if (!isJumping && isRunning) {
+      setStartYPosition(characterPosition);
+      setJumpVelocity(JUMP_STRENGTH);
+      setIsJumping(true);
+    }
+  };
 
   return (
     <div className="relative h-screen w-full bg-black overflow-hidden">
@@ -120,7 +178,8 @@ function RunningScreen() {
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
         </Link>
       </div>
-      <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ top: `${characterPosition}%`, width: `${characterSize}px`, height: `${characterSize}px` }}>
+      {/* ▼▼▼【ジャンプ機能】キャラクターの表示位置をcharacterDisplayPositionで制御するよう変更 ▼▼▼ */}
+      <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2" style={{ top: `${characterDisplayPosition}%`, width: `${characterSize}px`, height: `${characterSize}px` }}>
         {currentCharacter ? (
           <img src={currentCharacter.imageSrc} alt={currentCharacter.name} className="w-full h-full object-contain" />
         ) : (
@@ -150,7 +209,17 @@ function RunningScreen() {
           {!isRunning ? (
             <button onClick={handleStartRun} className="bg-[#4CAF50] text-white font-bold py-3 px-10 rounded-full text-xl font-roboto shadow-lg">走行開始</button>
           ) : (
-            <button onClick={handleEndRun} className="bg-[#f44336] text-white font-bold py-3 px-10 rounded-full text-xl font-roboto shadow-lg">走行終了</button>
+            // ▼▼▼【ジャンプ機能】走行終了ボタンとジャンプボタンをまとめる ▼▼▼
+            <div className="flex flex-col items-center gap-4">
+              <button onClick={handleEndRun} className="bg-[#f44336] text-white font-bold py-3 px-10 rounded-full text-xl font-roboto shadow-lg">走行終了</button>
+              <button
+                onClick={handleJump}
+                disabled={isJumping}
+                className={`bg-blue-500 text-white font-bold py-2 px-6 rounded-full text-lg shadow-lg ${isJumping ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600 transition'}`}
+              >
+                ジャンプ！
+              </button>
+            </div>
           )}
         </div>
       </div>
