@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useCharacterContext } from '../contexts/CharacterContext';
 // ▼▼▼【新規】背景画像をインポート ▼▼▼
-import backgroundImage from '../images/思い出.avif';
+import backgroundImage from '../images/汽車.jpg';
 
 function RecordScreen() {
     const { records, totalRunDuration, totalAccumulatedPoints, clearRecords } = useCharacterContext();
