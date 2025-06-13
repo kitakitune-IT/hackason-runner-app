@@ -38,12 +38,12 @@ function ShopScreen() {
     <div className="min-h-screen bg-[#f5f5f5] flex flex-col items-center p-4">
       {tutorialStep === 1 && (
         <div className="bg-white shadow-lg rounded-lg p-4 my-4 border-2 border-blue-500">
-          <p className="text-center font-bold text-blue-600">まずは「ミーム」をアンロックしてみましょう！</p>
+          <p className="text-center font-bold text-blue-600">まずは「nyan cat」をアンロックしてみましょう！</p>
         </div>
       )}
       {tutorialStep === 2 && (
         <div className="bg-white shadow-lg rounded-lg p-4 my-4 border-2 border-green-500">
-          <p className="text-center font-bold text-green-600">ミームがアンロックされました！<br/>下のボタンを押してホーム画面に戻りましょう。</p>
+          <p className="text-center font-bold text-green-600">nyan catがアンロックされました！<br/>下のボタンを押してホーム画面に戻りましょう。</p>
         </div>
       )}
 
