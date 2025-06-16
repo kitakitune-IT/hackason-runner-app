@@ -242,14 +242,11 @@ function RunningScreen() {
           {!isRunning ? (
             <button onClick={handleStartRun} className="bg-[#4CAF50] text-white font-bold py-3 px-10 rounded-full text-lg font-roboto shadow-lg">走行開始</button>
           ) : (
-            // ▼▼▼【変更】走行中のボタンレイアウトを変更 ▼▼▼
             <div className="flex flex-row items-center justify-center gap-8">
-              {/* UI表示時のみジャンプボタンを表示 */}
               {isUiVisible && (
                 <button
                   onClick={handleJump}
                   disabled={isJumping}
-                  // 開始/終了ボタンと同じサイズに
                   className={`bg-blue-500 text-white font-bold py-3 px-10 rounded-full text-lg font-roboto shadow-lg ${isJumping ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600 transition'}`}
                 >
                   ジャンプ
@@ -261,13 +258,10 @@ function RunningScreen() {
         </div>
       </div>
       
-      {/* ▼▼▼【変更】左下のボタン群のレイアウトがずれないように修正 ▼▼▼ */}
       <div className="absolute bottom-24 left-4 z-50 flex flex-col-reverse gap-4 pointer-events-auto">
-        {/* UI表示/非表示ボタンを一番下に配置 */}
         <button onClick={() => setIsUiVisible(prev => !prev)} className="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition">
           {isUiVisible ? ( <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> ) : ( <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59" /></svg> )}
         </button>
-        {/* キャラクター変更ボタンの表示をCSSで制御 */}
         <button 
           onClick={() => setIsSlotModalOpen(true)} 
           className={`bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition-opacity duration-300 ${isUiVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
