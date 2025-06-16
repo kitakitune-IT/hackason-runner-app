@@ -196,6 +196,7 @@ function RunningScreen() {
     });
   };
 
+// ▼▼▼ handleCapture関数内を変更 ▼▼▼
   const handleCapture = async () => {
     if (!screenRef.current || !videoRef.current) {
       setError("撮影の準備ができていません。");
@@ -229,7 +230,8 @@ function RunningScreen() {
 
       canvas.toBlob(async (blob) => {
         if (blob) {
-          await addAlbumPhoto(blob);
+          //【重要】ここでコンテキストの関数を呼ぶ。変換処理はContext側が担当する。
+          await addAlbumPhoto(blob); 
           setCaptureMessage('撮影しました！');
           setTimeout(() => setCaptureMessage(''), 2000);
         } else {

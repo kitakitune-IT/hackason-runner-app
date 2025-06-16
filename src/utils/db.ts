@@ -3,18 +3,18 @@
 export interface CustomGifEntity {
   id?: number;
   name: string;
-  imageFile: File;
+  imageDataUrl: string;
 }
 
 export interface StaticImageEntity {
   id?: number;
   name: string;
-  imageFile: File;
+  imageDataUrl: string;
 }
 
 export interface AlbumPhotoEntity {
   id?: number;
-  photoBlob: Blob;
+  photoDataUrl: string;
   createdAt: Date;
 }
 
@@ -64,14 +64,14 @@ function initDB(): Promise<IDBDatabase> {
 }
 
 // ========== GIF Characters ==========
-export async function addGif(name: string, imageFile: File): Promise<void> {
+// ▼▼▼【変更】Fileの代わりにimageDataUrlを受け取る ▼▼▼
+export async function addGif(name: string, imageDataUrl: string): Promise<void> {
   const db = await initDB();
   const transaction = db.transaction(GIF_STORE_NAME, 'readwrite');
   const store = transaction.objectStore(GIF_STORE_NAME);
   return new Promise((resolve, reject) => {
-    const request = store.add({ name, imageFile });
+    const request = store.add({ name, imageDataUrl });
     request.onsuccess = () => resolve();
-    // ▼▼▼【修正】未使用の引数 'e' を '_e' に変更 ▼▼▼
     request.onerror = (_e) => reject(request.error);
   });
 }
@@ -107,14 +107,14 @@ export async function clearAllGifs(): Promise<void> {
 }
 
 // ========== Static Images (PNG) ==========
-export async function addStaticImage(name: string, imageFile: File): Promise<void> {
+// ▼▼▼【変更】Fileの代わりにimageDataUrlを受け取る ▼▼▼
+export async function addStaticImage(name: string, imageDataUrl: string): Promise<void> {
   const db = await initDB();
   const transaction = db.transaction(PNG_STORE_NAME, 'readwrite');
   const store = transaction.objectStore(PNG_STORE_NAME);
   return new Promise((resolve, reject) => {
-    const request = store.add({ name, imageFile });
+    const request = store.add({ name, imageDataUrl });
     request.onsuccess = () => resolve();
-    // ▼▼▼【修正】未使用の引数 'e' を '_e' に変更 ▼▼▼
     request.onerror = (_e) => reject(request.error);
   });
 }
@@ -150,14 +150,14 @@ export async function clearAllStaticImages(): Promise<void> {
 }
 
 // ========== Album Photos ==========
-export async function addAlbumPhoto(photoBlob: Blob): Promise<void> {
+// ▼▼▼【変更】Blobの代わりにphotoDataUrlを受け取る ▼▼▼
+export async function addAlbumPhoto(photoDataUrl: string): Promise<void> {
   const db = await initDB();
   const transaction = db.transaction(ALBUM_STORE_NAME, 'readwrite');
   const store = transaction.objectStore(ALBUM_STORE_NAME);
   return new Promise((resolve, reject) => {
-    const request = store.add({ photoBlob, createdAt: new Date() });
+    const request = store.add({ photoDataUrl, createdAt: new Date() });
     request.onsuccess = () => resolve();
-    // ▼▼▼【修正】未使用の引数 'e' を '_e' に変更 ▼▼▼
     request.onerror = (_e) => reject(request.error);
   });
 }
