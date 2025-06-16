@@ -6,21 +6,17 @@ import type { Character } from '../data/characterData';
 import backgroundImage from '../images/スーツケース.avif';
 
 function WorkshopScreen() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const { 
+  const { 
     slots, updateSlot, unlockedCharacterIds, tutorialStep, setTutorialStep, 
     customCharacters, addCustomCharacter, deleteCustomCharacter,
     staticImages, pngSlots, addStaticImage, deleteStaticImage, updatePngSlot
   } = useCharacterContext();  
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedSlotIndex, setSelectedSlotIndex] = useState<number | null>(null);
   const [message, setMessage] = useState('');
   
   const [newCharName, setNewCharName] = useState('');
-// ▼▼▼【ここから新規】静止画(PNG)アップロード用のstateとハンドラ ▼▼▼
   const [newPngName, setNewPngName] = useState('');
   const [newPngFile, setNewPngFile] = useState<File | null>(null);
   const pngFileInputRef = useRef<HTMLInputElement>(null);
@@ -33,7 +29,6 @@ const {
   const handlePngFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // PNGファイルのみを受け付けるようにチェック
       if (file.type !== 'image/png') {
         setMessage('PNG画像のみアップロードできます。');
         return;
@@ -75,7 +70,6 @@ const {
         }
     }
   };
-  // ▲▲▲【ここまで新規】▲▲▲
   const [newCharFile, setNewCharFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -95,7 +89,7 @@ const {
     setIsModalOpen(true);
   };
     const handlePngSlotClick = (index: number) => {
-    setModalMode('png'); // モードを 'png' に設定
+    setModalMode('png');
     setSelectedSlotIndex(index);
     setIsModalOpen(true);
   };
@@ -104,11 +98,10 @@ const {
     if (selectedSlotIndex !== null) {
       if (modalMode === 'gif') {
         updateSlot(selectedSlotIndex, character);
-        // GIFスロット用のチュートリアルロジック
         if (tutorialStep === 3 && selectedSlotIndex === 0) {
           setTutorialStep(4);
         }
-      } else { // modalMode === 'png'
+      } else {
         updatePngSlot(selectedSlotIndex, character);
       }
     }
@@ -120,7 +113,11 @@ const {
     if (tutorialStep === 3) return;
     
     if (selectedSlotIndex !== null) {
-      updateSlot(selectedSlotIndex, null);
+      if (modalMode === 'gif') {
+        updateSlot(selectedSlotIndex, null);
+      } else {
+        updatePngSlot(selectedSlotIndex, null);
+      }
     }
     setIsModalOpen(false);
     setSelectedSlotIndex(null);
@@ -184,27 +181,25 @@ const {
     }
   };
 
-    const backgroundStyle = {
+  const backgroundStyle = {
     backgroundImage: `url(${backgroundImage})`
   };
 
-  return (
+return (
     <div className="min-h-screen bg-cover bg-center bg-fixed flex flex-col items-center p-4" style={backgroundStyle}>
        <div className="absolute inset-0 bg-black bg-opacity-40 z-0"></div>
+
       {tutorialStep === 3 && (
         <div className="bg-white shadow-lg rounded-lg p-4 my-4 border-2 border-blue-500 w-full max-w-2xl">
           <p className="text-center font-bold text-blue-600">「スロット1」をタップして、キャラクターをセットしましょう！</p>
         </div>
       )}
 
-      {/* ▼▼▼【変更】チュートリアル完了メッセージの表示方法を修正 ▼▼▼ */}
       {tutorialStep === 4 && (
-        // 背景をクリックしてもチュートリアルが完了するように、オーバーレイ全体にonClickを設定
         <div 
           className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 cursor-pointer"
           onClick={() => setTutorialStep(5)}
         >
-          {/* メッセージボックス自体がクリックイベントを伝播させないようにするには e.stopPropagation() を使うが、今回はどこをクリックしても閉じるようにするため不要 */}
           <div className="bg-white rounded-lg shadow-xl p-8 max-w-xs mx-auto">
             <p className="text-gray-800 text-lg text-center font-bold">
               これで、走行の準備は完了です！<br/>
@@ -219,153 +214,103 @@ const {
         <h1 className="text-4xl font-bold my-8 font-mincho text-white drop-shadow-lg">ワークショップ</h1>
         {message && <p className="text-center text-red-300 bg-black bg-opacity-50 rounded-md py-2 px-4 mb-4 font-bold">{message}</p>}
         
-        {/* ▼▼▼【変更】ガラス風UIに変更 ▼▼▼ */}
-        <div className="bg-white bg-opacity-20 backdrop-blur-md border border-white border-opacity-30 rounded-lg shadow-lg p-6 w-full max-w-2xl mb-8">
-          <p className="text-center text-gray-200 mb-6 drop-shadow-md">走行画面で使うキャラクターを4つのスロットにセットしてください。</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {slots.map((slotCharacter, index) => (
-              <div key={index} onClick={() => handleSlotClick(index)} className={`border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-white hover:bg-opacity-20 transition-colors ${getSlotClass(index)}`}>
-                <p className="font-bold text-gray-200 mb-2">スロット {index + 1}</p>
-                {slotCharacter ? ( <><img src={slotCharacter.imageSrc} alt={slotCharacter.name} className="w-24 h-24 mx-auto object-contain" /><p className="mt-2 font-semibold text-white">{slotCharacter.name}</p></> ) : ( <div className="w-24 h-24 mx-auto flex items-center justify-center bg-black bg-opacity-20 rounded-md"><p className="text-gray-400">空き</p></div> )}
+        {/* ▼▼▼【変更】コンテンツ全体を囲むラッパーを追加し、position:relative を指定 ▼▼▼ */}
+        <div className="relative w-full max-w-2xl">
+          
+          {/* ▼▼▼【新規】背景専用の絶対配置パネル(-z-10でコンテンツの後ろへ) ▼▼▼ */}
+          <div className="absolute inset-0 bg-white bg-opacity-20 backdrop-blur-md border border-white border-opacity-30 rounded-lg shadow-lg -z-10"></div>
+          
+          {/* ▼▼▼【変更】コンテンツ本体のコンテナ。背景スタイルは削除し、パディング(p-6)で内側の余白を確保 ▼▼▼ */}
+          <div className="p-6">
+            <div className="mb-8">
+              <p className="text-center text-gray-200 mb-6 drop-shadow-md">走行画面で使うキャラクター（GIF）を4つのスロットにセットしてください。</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {slots.map((slotCharacter, index) => (
+                  <div key={index} onClick={() => handleSlotClick(index)} className={`border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-white hover:bg-opacity-20 transition-colors ${getSlotClass(index)}`}>
+                    <p className="font-bold text-gray-200 mb-2">スロット {index + 1}</p>
+                    {slotCharacter ? ( <><img src={slotCharacter.imageSrc} alt={slotCharacter.name} className="w-24 h-24 mx-auto object-contain" /><p className="mt-2 font-semibold text-white">{slotCharacter.name}</p></> ) : ( <div className="w-24 h-24 mx-auto flex items-center justify-center bg-black bg-opacity-20 rounded-md"><p className="text-gray-400">空き</p></div> )}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-
-                <div className="bg-white bg-opacity-20 backdrop-blur-md border border-white border-opacity-30 rounded-lg shadow-lg p-6 w-full max-w-2xl mb-8">
-          <p className="text-center text-gray-200 mb-6 drop-shadow-md">走行画面で使う静止画を4つのスロットにセットしてください。</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {pngSlots.map((slotCharacter, index) => (
-              <div key={index} onClick={() => handlePngSlotClick(index)} className={`border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-white hover:bg-opacity-20 transition-colors`}>
-                <p className="font-bold text-gray-200 mb-2">静止画 {index + 1}</p>
-                {slotCharacter ? ( <><img src={slotCharacter.imageSrc} alt={slotCharacter.name} className="w-24 h-24 mx-auto object-contain" /><p className="mt-2 font-semibold text-white">{slotCharacter.name}</p></> ) : ( <div className="w-24 h-24 mx-auto flex items-center justify-center bg-black bg-opacity-20 rounded-md"><p className="text-gray-400">空き</p></div> )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl mb-8">
-        <h2 className="text-xl font-bold text-gray-700 mb-4 border-b pb-2">オリジナル画像の追加</h2>
-        <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <input 
-              type="text" 
-              placeholder="画像名" 
-              value={newCharName}
-              onChange={(e) => setNewCharName(e.target.value)}
-              className="p-2 border rounded-md w-full sm:w-auto flex-grow"
-            />
-            <input 
-              type="file" 
-              accept="image/gif" 
-              ref={fileInputRef} 
-              onChange={handleFileChange}
-              className="hidden"
-            />
-            <button 
-              onClick={handleFileSelectClick}
-              className="w-full sm:w-auto bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md transition-colors"
-            >
-              GIFファイルを選択
-            </button>
-            <button 
-              onClick={handleUpload}
-              className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition-colors"
-            >
-              追加する
-            </button>
-        </div>
-        {/* ▼▼▼【ここから新規】静止画(PNG)アップロードフォーム ▼▼▼ */}
-        <div className="bg-white bg-opacity-20 backdrop-blur-md border border-white border-opacity-30 rounded-lg shadow-lg p-6 w-full max-w-2xl mb-8">
-          <h2 className="text-xl font-bold text-black mb-4 border-b pb-2 drop-shadow-md">静止画(PNG)の追加</h2>
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
-              <input 
-                type="text" 
-                placeholder="静止画名" 
-                value={newPngName}
-                onChange={(e) => setNewPngName(e.target.value)}
-                className="p-2 border rounded-md w-full sm:w-auto flex-grow"
-              />
-              <input 
-                type="file" 
-                accept="image/png" 
-                ref={pngFileInputRef} 
-                onChange={handlePngFileChange}
-                className="hidden"
-              />
-              <button 
-                onClick={handlePngFileSelectClick}
-                className="w-full sm:w-auto bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md transition-colors"
-              >
-                PNGファイルを選択
-              </button>
-              <button 
-                onClick={handlePngUpload}
-                className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition-colors"
-              >
-                追加する
-              </button>
-          </div>
-        </div>
-        {/* ▲▲▲【ここまで新規】▲▲▲ */}
-
-        {/* ▼▼▼【新規】静止画(PNG)管理リスト ▼▼▼ */}
-        <div className="bg-white bg-opacity-20 backdrop-blur-md border border-white border-opacity-30 rounded-lg shadow-lg p-6 w-full max-w-2xl mb-8">
-          <h2 className="text-xl font-bold text-black mb-4 border-b pb-2 drop-shadow-md">静止画の管理</h2>
-          {staticImages.length > 0 ? (
-            <div className="space-y-3">
-              {staticImages.map(char => (
-                <div key={char.id} className="flex items-center justify-between bg-gray-800 bg-opacity-50 p-2 rounded-lg">
-                  <img src={char.imageSrc} alt={char.name} className="w-12 h-12 object-contain rounded-md bg-white"/>
-                  <span className="font-semibold text-gray-200 flex-grow ml-4">{char.name}</span>
-                  <button 
-                    onClick={() => handlePngDelete(char)}
-                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-md text-sm transition-colors"
-                  >
-                    削除
-                  </button>
-                </div>
-              ))}
             </div>
-          ) : (
-            <p className="text-center text-gray-400">追加された静止画はありません。</p>
-          )}
-        </div>
-        {/* ▲▲▲【ここまで新規】▲▲▲ */}
-      </div>
 
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl mb-8">
-        <h2 className="text-xl font-bold text-gray-700 mb-4 border-b pb-2">オリジナル画像の管理</h2>
-        {customCharacters.length > 0 ? (
-          <div className="space-y-3">
-            {customCharacters.map(char => (
-              <div key={char.id} className="flex items-center justify-between bg-gray-50 p-2 rounded-lg">
-                <img src={char.imageSrc} alt={char.name} className="w-12 h-12 object-contain rounded-md bg-white"/>
-                <span className="font-semibold text-gray-800 flex-grow ml-4">{char.name}</span>
-                <button 
-                  onClick={() => handleDelete(char)}
-                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-md text-sm transition-colors"
-                >
-                  削除
-                </button>
+            <div className="mb-8">
+              <p className="text-center text-gray-200 mb-6 drop-shadow-md">走行画面で使う静止画（PNG）を4つのスロットにセットしてください。</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {pngSlots.map((slotCharacter, index) => (
+                  <div key={index} onClick={() => handlePngSlotClick(index)} className={`border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-white hover:bg-opacity-20 transition-colors`}>
+                    <p className="font-bold text-gray-200 mb-2">静止画 {index + 1}</p>
+                    {slotCharacter ? ( <><img src={slotCharacter.imageSrc} alt={slotCharacter.name} className="w-24 h-24 mx-auto object-contain" /><p className="mt-2 font-semibold text-white">{slotCharacter.name}</p></> ) : ( <div className="w-24 h-24 mx-auto flex items-center justify-center bg-black bg-opacity-20 rounded-md"><p className="text-gray-400">空き</p></div> )}
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+
+            <div className="mb-8">
+              <h2 className="text-xl font-bold text-white mb-4 border-b pb-2 drop-shadow-md">オリジナル画像 (GIF) の追加</h2>
+              <div className="flex flex-col sm:flex-row gap-4 items-center">
+                <input type="text" placeholder="画像名" value={newCharName} onChange={(e) => setNewCharName(e.target.value)} className="p-2 border rounded-md w-full sm:w-auto flex-grow bg-gray-200 text-gray-800 placeholder-gray-500"/>
+                <input type="file" accept="image/gif" ref={fileInputRef} onChange={handleFileChange} className="hidden"/>
+                <button onClick={handleFileSelectClick} className="w-full sm:w-auto bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors">GIFファイルを選択</button>
+                <button onClick={handleUpload} className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition-colors">追加する</button>
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <h2 className="text-xl font-bold text-white mb-4 border-b pb-2 drop-shadow-md">オリジナル画像 (GIF) の管理</h2>
+              {customCharacters.length > 0 ? (
+                <div className="space-y-3">
+                  {customCharacters.map(char => (
+                    <div key={char.id} className="flex items-center justify-between bg-black bg-opacity-30 p-2 rounded-lg">
+                      <img src={char.imageSrc} alt={char.name} className="w-12 h-12 object-contain rounded-md bg-white p-1"/>
+                      <span className="font-semibold text-gray-200 flex-grow ml-4">{char.name}</span>
+                      <button onClick={() => handleDelete(char)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-md text-sm transition-colors">削除</button>
+                    </div>
+                  ))}
+                </div>
+              ) : (<p className="text-center text-gray-300">追加されたオリジナル画像はありません。</p>)}
+            </div>
+
+            <div className="mb-8">
+              <h2 className="text-xl font-bold text-white mb-4 border-b pb-2 drop-shadow-md">静止画 (PNG) の追加</h2>
+              <div className="flex flex-col sm:flex-row gap-4 items-center">
+                  <input type="text" placeholder="静止画名" value={newPngName} onChange={(e) => setNewPngName(e.target.value)} className="p-2 border rounded-md w-full sm:w-auto flex-grow bg-gray-200 text-gray-800 placeholder-gray-500"/>
+                  <input type="file" accept="image/png" ref={pngFileInputRef} onChange={handlePngFileChange} className="hidden"/>
+                  <button onClick={handlePngFileSelectClick} className="w-full sm:w-auto bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors">PNGファイルを選択</button>
+                  <button onClick={handlePngUpload} className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition-colors">追加する</button>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-xl font-bold text-white mb-4 border-b pb-2 drop-shadow-md">静止画の管理</h2>
+              {staticImages.length > 0 ? (
+                <div className="space-y-3">
+                  {staticImages.map(char => (
+                    <div key={char.id} className="flex items-center justify-between bg-black bg-opacity-30 p-2 rounded-lg">
+                      <img src={char.imageSrc} alt={char.name} className="w-12 h-12 object-contain rounded-md bg-white p-1"/>
+                      <span className="font-semibold text-gray-200 flex-grow ml-4">{char.name}</span>
+                      <button onClick={() => handlePngDelete(char)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-md text-sm transition-colors">削除</button>
+                    </div>
+                  ))}
+                </div>
+              ) : (<p className="text-center text-gray-300">追加された静止画はありません。</p>)}
+            </div>
           </div>
-        ) : (
-          <p className="text-center text-gray-500">追加されたオリジナル画像はありません。</p>
-        )}
+          
+          <div className="p-6">
+            <Link to="/" className={`w-full ${tutorialStep === 3 ? 'pointer-events-none' : ''}`}>
+              <button className={`w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-8 rounded-lg text-xl font-roboto shadow-lg ${tutorialStep === 3 ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                ホームに戻る
+              </button>
+            </Link>
+          </div>
+        </div>
+        {/* ▲▲▲【変更】ラッパーの閉じタグ ▲▲▲ */}
       </div>
 
-        <Link to="/" className={`w-full max-w-2xl ${tutorialStep === 3 ? 'pointer-events-none' : ''}`}>
-          <button className={`w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-4 px-8 rounded-lg text-xl font-roboto shadow-lg ${tutorialStep === 3 ? 'opacity-50 cursor-not-allowed' : ''}`}>
-            ホームに戻る
-          </button>
-        </Link>
-      </div>
-
-{isModalOpen && (
+      {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={handleCloseModal}>
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
-            {/* ▼▼▼【変更】モーダルのタイトルを動的に変更 ▼▼▼ */}
             <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
               {modalMode === 'gif' ? 'キャラクターを選択' : '静止画を選択'}
             </h2>
@@ -374,11 +319,8 @@ const {
                 このスロットを空にする
               </button>
             </div>
-            
-            {/* ▼▼▼【変更】モードに応じて表示するキャラクターリストを分岐 ▼▼▼ */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {modalMode === 'gif' ? (
-                // GIF選択モード
                 <>
                   {selectableCharacters.map((char) => (
                     <div key={char.id} className="p-3 bg-gray-100 rounded-lg text-center cursor-pointer hover:bg-gray-200 transition-colors" onClick={() => handleCharacterSelect(char)}>
@@ -389,7 +331,6 @@ const {
                   {selectableCharacters.length === 0 && <p className='col-span-4 text-center text-gray-500'>アンロック済みのgifや、追加したキャラクターがありません。</p>}
                 </>
               ) : (
-                // PNG選択モード
                 <>
                   {staticImages.map((char) => (
                     <div key={char.id} className="p-3 bg-gray-100 rounded-lg text-center cursor-pointer hover:bg-gray-200 transition-colors" onClick={() => handleCharacterSelect(char)}>
