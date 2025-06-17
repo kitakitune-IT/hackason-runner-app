@@ -56,9 +56,23 @@ function HomeScreen() {
   return (
     <div className="min-h-screen bg-cover bg-center flex flex-col items-center justify-center p-4 relative" style={backgroundStyle}>
       <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-      {/* ▼▼▼【変更】ボタンのテキストを「ユーザーデータ削除」に変更 ▼▼▼ */}
       <div className="absolute top-4 right-4 z-20"><button onClick={handleDeleteAllData} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm">ユーザーデータ削除</button></div>
       <div className="relative z-10 flex flex-col items-center text-center">
+
+        {/* ▼▼▼【変更】チュートリアルメッセージをここに移動し、スタイルを変更 ▼▼▼ */}
+        {isTutorialActive && (
+          <div className="w-full max-w-sm mb-6">
+            {(tutorialStep === 0 || tutorialStep === 2) && (
+              <div className="bg-white rounded-lg shadow-xl p-4">
+                <p className="text-gray-800 text-lg text-center font-bold">
+                  {tutorialStep === 0 && 'ようこそ！\nまずは、「ショップ」に行ってみましょう。'}
+                  {tutorialStep === 2 && 'おかえりなさい！\n次は、「ワークショップ」でキャラクターをセットしましょう。'}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+        
         <h1 className="text-4xl md:text-6xl font-bold mb-12 font-mincho text-white drop-shadow-lg">こころの車窓から</h1>
         <div className="flex flex-col gap-4 w-full max-w-sm">
           <Link to="/running" onClick={handleLinkClick}>
@@ -66,7 +80,6 @@ function HomeScreen() {
               走行開始
             </button>
           </Link>
-          {/* ▼▼▼【変更】ボタンを2x2のグリッドレイアウトにし、「アルバム」ボタンを追加 ▼▼▼ */}
           <div className="grid grid-cols-2 gap-3 w-full mt-4">
             <button 
               onClick={() => handleTutorialNavigation('/shop', 0, 1)} 
@@ -95,18 +108,7 @@ function HomeScreen() {
           </div>
         </div>
       </div>
-      {isTutorialActive && (
-        <div className="fixed inset-0 flex items-center justify-center z-30 pointer-events-none">
-          {(tutorialStep === 0 || tutorialStep === 2) && (
-            <div className="bg-white rounded-lg shadow-xl p-4 max-w-xs mx-auto pointer-events-auto">
-              <p className="text-gray-800 text-lg text-center font-bold">
-                {tutorialStep === 0 && 'ようこそ！\nまずは、「ショップ」に行ってみましょう。'}
-                {tutorialStep === 2 && 'おかえりなさい！\n次は、「ワークショップ」でキャラクターをセットしましょう。'}
-              </p>
-            </div>
-          )}
-        </div>
-      )}
+      {/* ▲▲▲【変更】チュートリアルメッセージのコードブロックを上記に移動したため、ここからは削除 ▲▲▲ */}
     </div>
   );
 }
