@@ -5,6 +5,7 @@ import ShopScreen from './pages/ShopScreen';
 import WorkshopScreen from './pages/WorkshopScreen'; // ← コメントアウトされていないことを確認
 import ResultScreen from './pages/ResultScreen';
 import RecordScreen from './pages/RecordScreen';
+import AlbumScreen from './pages/AlbumScreen'; // ← 追加
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
       <Route path="/workshop" element={<WorkshopScreen />} /> {/* ← コメントアウトされていないことを確認 */}
       <Route path="/result" element={<ResultScreen />} />
       <Route path="/record" element={<RecordScreen />} />
+      <Route path="/album" element={<AlbumScreen />} /> {/* ← 追加 */}
     </Routes>
   );
 }
